@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Material Template
   m_EditorClassIdentifier: 
   typeOneMaterial: {fileID: 2100000, guid: 0008990513fec8b4c91759bb7f0af12f, type: 2}
-  typeTwoMaterial: {fileID: 10756, guid: 0000000000000000e000000000000000, type: 0}
+  typeTwoMaterial: {fileID: 2100000, guid: 1a8aabb972e63264d8bd4f065764dc81, type: 2}
