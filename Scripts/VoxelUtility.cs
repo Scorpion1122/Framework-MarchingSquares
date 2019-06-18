@@ -1,0 +1,63 @@
+﻿using Unity.Collections;
+using Unity.Mathematics;
+
+// (0,0) is left bottom, (max,max) is right top
+//
+public static class VoxelUtility
+{
+        public static float2 IndexToPosition(int index, int resolution, float size)
+        {
+                float x = math.floor(index % resolution) * size;
+                float y = math.floor((index - x) / resolution) * size;
+                return new float2(x, y);
+        }
+
+        //None
+        //0:  FillType.None, FillType.None, FillType.None, FillType.None
+        
+        //One Corner
+        //1:  FillType.TypeOne, FillType.None, FillType.None, FillType.None
+        //2:  FillType.None, FillType.TypeOne, FillType.None, FillType.None
+        //4:  FillType.None, FillType.None, FillType.TypeOne, FillType.None
+        //8:  FillType.None, FillType.None, FillType.None, FillType.TypeOne
+        
+        //Two Corners
+        //3:  FillType.TypeOne, FillType.TypeOne, FillType.None, FillType.None
+        //6:  FillType.None, FillType.TypeOne, FillType.TypeOne, FillType.None
+        //12: FillType.None, FillType.None, FillType.TypeOne, FillType.TypeOne
+        //9:  FillType.TypeOne, FillType.None, FillType.None, FillType.TypeOne
+        
+        //Opposite Corners
+        //5:  FillType.TypeOne, FillType.None, FillType.TypeOne, FillType.None
+        //10: FillType.None, FillType.TypeOne, FillType.None, FillType.TypeOne
+        
+        //Three Corners
+        //7:  FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.None
+        //14: FillType.None, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne
+        //13: FillType.TypeOne, FillType.None, FillType.TypeOne, FillType.TypeOne
+        //11: FillType.TypeOne, FillType.TypeOne, FillType.None, FillType.TypeOne
+        
+        //All Corners
+        //15:  FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne
+        public static short GetVoxelShape(
+                FillType compareType, FillType bottomLeft, FillType topLeft, FillType topRight, FillType bottomRight)
+        {
+                short result = 0;
+                if (compareType == bottomLeft)
+                        result |= 1;
+                if (compareType == topLeft)
+                        result |= 2;
+                if (compareType == topRight)
+                        result |= 4;
+                if (compareType == bottomRight)
+                        result |= 8;
+                return result;
+        }
+        
+        public static FillType GetNeightbour(NativeArray<FillType> fillTypes, int index)
+        {
+                if (index >= fillTypes.Length)
+                    return FillType.None;
+                return fillTypes[index];
+        }
+}
