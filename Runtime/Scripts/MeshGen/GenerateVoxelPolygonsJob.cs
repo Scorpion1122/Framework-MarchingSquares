@@ -30,7 +30,7 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
     {
         int topIndex = index + resolution;
         int topRightIndex = index + resolution + 1;
-        int rightIndex = index + + 1;
+        int rightIndex = index + 1;
 
         FillType currentFill = fillTypes[index];
         FillType topFill = GetNeightbourFillType(topIndex);
@@ -134,7 +134,7 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
                     curPosition + new float2(0, currentOffset.y),
                     curPosition + new float2(currentOffset.x, 0),
                     topRightPosition,
-                    rightPosition + new float2(rightOffset.y, 0),
+                    rightPosition + new float2(0, rightOffset.y),
                     topPosition + new float2(topOffset.x, 0));
                 break;
             case 10:
@@ -258,7 +258,7 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
         polygons.Add((int)fillType,
             new Polygon()
             {
-                type = PolygonType.TwoCorners,
+                type = PolygonType.CrossCorners,
                 one = one,
                 two = two,
                 three = three,
