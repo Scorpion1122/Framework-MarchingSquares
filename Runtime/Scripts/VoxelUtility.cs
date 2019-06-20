@@ -53,6 +53,32 @@ public static class VoxelUtility
                         result |= 8;
                 return result;
         }
+
+        public static short GetVoxelShape(int index, FillType fillType, NativeArray<FillType> fillTypes, int resolution)
+        {                
+                int topIndex = index + resolution;
+                int topRightIndex = index + resolution + 1;
+                int rightIndex = index + 1;
+
+                FillType currentFill = fillTypes[index];
+                FillType topFill = GetNeightbourFillType(topIndex);
+                FillType topRightFill = GetNeightbourFillType(topRightIndex);
+                FillType rightFill = GetNeightbourFillType(rightIndex);
+
+                return VoxelUtility.GetVoxelShape(
+                        fillType,
+                        currentFill,
+                        topFill,
+                        topRightFill,
+                        rightFill);
+        }
+
+        private FillType GetNeightbourFillType(int index)
+        {
+                if (index >= fillTypes.Length)
+                        return FillType.None;
+                return fillTypes[index];
+        }
         
         public static FillType GetNeightbour(NativeArray<FillType> fillTypes, int index)
         {

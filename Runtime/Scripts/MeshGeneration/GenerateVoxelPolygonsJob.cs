@@ -11,7 +11,6 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
     [ReadOnly] public NativeArray<FillType> generateForFillTypes;
     [ReadOnly] public NativeArray<FillType> fillTypes;
     [ReadOnly] public NativeArray<float2> offsets;
-    //[WriteOnly] public NativeQueue<Polygon>.Concurrent polygons;
     [WriteOnly] public NativeMultiHashMap<int, Polygon>.Concurrent polygons;
 
     //  top ----- top right
@@ -222,14 +221,6 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
             two = two,
             three = three,
         });
-
-//        polygons.Enqueue(new Polygon()
-//        {
-//            type = PolygonType.OneCorner,
-//            one = one,
-//            two = two,
-//            three = three,
-//        });
     }
 
     private void AddTwoCornerPolygon(FillType fillType, float2 one, float2 two, float2 three, float2 four)
@@ -243,14 +234,6 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
                 three = three,
                 four = four,
             });
-//        polygons.Enqueue(new Polygon()
-//        {
-//            type = PolygonType.TwoCorners,
-//            one = one,
-//            two = two,
-//            three = three,
-//            four = four,
-//        });
     }
 
     private void AddCrossCornerPolygon(FillType fillType, float2 one, float2 two, float2 three, float2 four, float2 five, float2 six)
@@ -266,16 +249,6 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
                 five = five,
                 six = six,
             });
-//        polygons.Enqueue(new Polygon()
-//        {
-//            type = PolygonType.TwoCorners,
-//            one = one,
-//            two = two,
-//            three = three,
-//            four = four,
-//            five = five,
-//            six = six,
-//        });
     }
 
     private void AddThreeCornersPolygon(FillType fillType, float2 one, float2 two, float2 three, float2 four, float2 five)
@@ -290,15 +263,6 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
                 four = four,
                 five = five,
             });
-//        polygons.Enqueue(new Polygon()
-//        {
-//            type = PolygonType.ThreeCorners,
-//            one = one,
-//            two = two,
-//            three = three,
-//            four = four,
-//            five = five,
-//        });
     }
 
     private void AddAllCornerPolygon(FillType fillType, float2 one, float2 two, float2 three, float2 four)
@@ -312,13 +276,5 @@ public struct GenerateVoxelPolygonsJob : IJobParallelFor
                 three = three,
                 four = four,
             });
-//        polygons.Enqueue(new Polygon()
-//        {
-//            type = PolygonType.AllCorners,
-//            one = one,
-//            two = two,
-//            three = three,
-//            four = four,
-//        });
     }
 }
