@@ -12,6 +12,18 @@ public static class VoxelUtility
                 return new float2(x, y);
         }
 
+        public static int2 IndexToIndex2(int index, int resolution)
+        {
+                int x = (int)math.floor(index % resolution);
+                int y = (int)math.floor((index - x) / resolution);
+                return new int2(x, y);  
+        }
+
+        public static int Index2ToIndex(int2 index, int resolution)
+        {
+                return index.x + index.y * resolution;
+        }
+
         //None
         //0:  FillType.None, FillType.None, FillType.None, FillType.None
         
@@ -85,5 +97,12 @@ public static class VoxelUtility
                 if (index >= fillTypes.Length)
                     return FillType.None;
                 return fillTypes[index];
+        }
+        
+        public static float2 GetNeightbourOffset(int index, NativeArray<float2> offsets)
+        {
+                if (index >= offsets.Length)
+                        return float2.zero;
+                return offsets[index];
         }
 }

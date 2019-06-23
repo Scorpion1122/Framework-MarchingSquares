@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 [ExecuteInEditMode]
 public class VoxelGrid : MonoBehaviour
@@ -15,7 +16,7 @@ public class VoxelGrid : MonoBehaviour
 
     private ChunkData chunkData;
     private NativeList<GridModification> modifiers;
-    private NativeArray<FillType> fillTypes;
+    private NativeArray<FillType> generateForFillTypes;
 
     private void OnEnable()
     {
@@ -30,10 +31,10 @@ public class VoxelGrid : MonoBehaviour
         modifiers = new NativeList<GridModification>(Allocator.Persistent);
 
         FillType[] allFillTypes = (FillType[])Enum.GetValues(typeof(FillType));
-        fillTypes = new NativeArray<FillType>(allFillTypes.Length - 1, Allocator.Persistent);
+        generateForFillTypes = new NativeArray<FillType>(allFillTypes.Length - 1, Allocator.Persistent);
         for (int i = 1; i < allFillTypes.Length; i++)
         {
-            fillTypes[i - 1] = allFillTypes[i];
+            generateForFillTypes[i - 1] = allFillTypes[i];
         }
     }
 
@@ -43,7 +44,7 @@ public class VoxelGrid : MonoBehaviour
         chunkData = null;
 
         modifiers.Dispose();
-        fillTypes.Dispose();
+        generateForFillTypes.Dispose();
 
         DestroyImmediate(meshFilter.sharedMesh);
     }
@@ -57,6 +58,8 @@ public class VoxelGrid : MonoBehaviour
 
     private void ScheduleModifyChunkJob(ChunkData chunkData, NativeList<GridModification> modifiers)
     {
+        chunkData.ClearTempData();
+        
         int voxelCount = chunkData.fillTypes.Length;
         ModifyFillTypeJob modifyFillJob = new ModifyFillTypeJob()
         {
@@ -83,7 +86,7 @@ public class VoxelGrid : MonoBehaviour
         {
             resolution = resolution,
             size = size,
-            generateForFillTypes = fillTypes,
+            generateForFillTypes = generateForFillTypes,
             fillTypes = chunkData.fillTypes,
             offsets = chunkData.offsets,
             polygons = chunkData.polygons.ToConcurrent(),
@@ -95,13 +98,35 @@ public class VoxelGrid : MonoBehaviour
         {
             polygons = chunkData.polygons,
             vertices = chunkData.vertices,
-            generateForFillTypes = fillTypes,
+            generateForFillTypes = generateForFillTypes,
             triangleIndices = chunkData.triangleIndices,
             triangleLengths = chunkData.triangleLengths,
         };
         jobHandle = generateMeshDataJob.Schedule(jobHandle);
         jobHandle.Complete();
-
+        
+        ColliderGenerationJob colliderGenerationJob = new ColliderGenerationJob()
+        {
+            resolution = resolution,
+            size = size,
+            fillTypes = chunkData.fillTypes,
+            offsets = chunkData.offsets,
+            
+            generateForFillTypes = generateForFillTypes,
+            
+            processed = new NativeList<int>(1000, Allocator.TempJob),
+            
+            vertices = chunkData.colliderVertices,
+            lengths = chunkData.colliderLengths,
+            fillType = chunkData.colliderTypes,
+        };
+//        Profiler.BeginSample("Create Colliders");
+//        colliderGenerationJob.Execute();
+//        Profiler.EndSample();
+        jobHandle = colliderGenerationJob.Schedule(jobHandle);
+        jobHandle.Complete();
+        
+        colliderGenerationJob.processed.Dispose();
 
         //Temp immediate
         meshFilter.sharedMesh.Clear();
@@ -127,7 +152,6 @@ public class VoxelGrid : MonoBehaviour
         }
         meshRenderer.sharedMaterials = materials;
 
-        chunkData.ClearTempData();
     }
 
     private int GetSubMeshCount(ChunkData chunkData)
@@ -147,6 +171,7 @@ public class VoxelGrid : MonoBehaviour
         if (chunkData == null)
             return;
 
-        VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+        //VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+        //VoxelGizmos.DrawColliders(transform, chunkData);
     }
 }
