@@ -2,7 +2,8 @@
 using Unity.Jobs;
 using UnityEngine;
 
-public class ChunkRenderer : MonoBehaviour
+[ExecuteInEditMode]
+public class ChunkRenderer : MonoBehaviour, IChunkJobDependency
 {
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private MeshFilter meshFilter;
@@ -13,19 +14,27 @@ public class ChunkRenderer : MonoBehaviour
     private NativeList<int> triangleIndices;
     private NativeList<int> triangleLengths;
 
-    private bool isChunkDataDirty;
     private VoxelGrid currentGrid;
-    private ChunkData currentChunkData;
     private JobHandle? currentJobHandle;
+
+    public static ChunkRenderer CreateNewInstance()
+    {
+        GameObject gameObject = new GameObject("Chunk Renderer");
+        gameObject.hideFlags = HideFlags.DontSave;
+        return gameObject.AddComponent<ChunkRenderer>();
+    }
 
     private void Awake()
     {
-        sharedMesh = new Mesh();
-        meshFilter.sharedMesh = sharedMesh;
+        meshRenderer = gameObject.AddComponent<MeshRenderer>();
+        meshFilter = gameObject.AddComponent<MeshFilter>();
     }
 
     private void OnEnable()
     {
+        sharedMesh = new Mesh();
+        meshFilter.sharedMesh = sharedMesh;
+
         polygons = new NativeMultiHashMap<int, Polygon>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
         vertices = new NativeList<Vector3>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
         triangleIndices = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
@@ -41,30 +50,33 @@ public class ChunkRenderer : MonoBehaviour
         vertices.Dispose();
         triangleIndices.Dispose();
         triangleLengths.Dispose();
+
+        DestroyImmediate(sharedMesh);
     }
 
-    public void OnChunkChanged(VoxelGrid grid, ChunkData chunkData)
+    private void ClearJobData()
     {
-        isChunkDataDirty = true;
-        currentChunkData = chunkData;
+        polygons.Clear();
+        vertices.Clear();
+        triangleIndices.Clear();
+        triangleLengths.Clear();
+    }
+
+    public JobHandle ScheduleChunkJob(VoxelGrid grid, ChunkData chunkData, JobHandle dependency)
+    {
         currentGrid = grid;
 
-        if (currentJobHandle == null)
-            StartGenerateMeshJob();
-    }
-
-    private void StartGenerateMeshJob()
-    {
+        ClearJobData();
         GenerateVoxelPolygonsJob generateVoxelPolygonsJob = new GenerateVoxelPolygonsJob()
         {
             resolution = currentGrid.Resolution,
             size = currentGrid.Size,
             generateForFillTypes = currentGrid.SupportedFillTypes,
-            fillTypes = currentChunkData.fillTypes,
-            offsets = currentChunkData.offsets,
+            fillTypes = chunkData.fillTypes,
+            offsets = chunkData.offsets,
             polygons = polygons.ToConcurrent(),
         };
-        currentJobHandle = generateVoxelPolygonsJob.Schedule(currentGrid.VoxelsPerChunk, 64);
+        currentJobHandle = generateVoxelPolygonsJob.Schedule(currentGrid.VoxelsPerChunk, 64, dependency);
 
         GenerateMeshDataJob generateMeshDataJob = new GenerateMeshDataJob()
         {
@@ -75,21 +87,13 @@ public class ChunkRenderer : MonoBehaviour
             triangleLengths = triangleLengths,
         };
         currentJobHandle = generateMeshDataJob.Schedule(currentJobHandle.Value);
+        return currentJobHandle.Value;
     }
 
-    private void LateUpdate()
+    public void OnJobCompleted()
     {
-        if (currentJobHandle == null)
-            return;
-
-        if (!currentJobHandle.Value.IsCompleted)
-            return;
-
-        ApplyDataToMesh();
         currentJobHandle = null;
-
-        if (isChunkDataDirty)
-            StartGenerateMeshJob();
+        ApplyDataToMesh();
     }
 
     private void ApplyDataToMesh()

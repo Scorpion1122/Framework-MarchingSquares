@@ -9,9 +9,6 @@ public class VoxelGrid : MonoBehaviour
 {
     [SerializeField] private int resolution = 128;
     [SerializeField] private float size = 1f;
-
-    [SerializeField] private MeshFilter meshFilter;
-    [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private MaterialTemplate materialTemplate;
 
     public float Size => size;
@@ -21,12 +18,14 @@ public class VoxelGrid : MonoBehaviour
     public NativeArray<FillType> SupportedFillTypes => generateForFillTypes;
 
     private ChunkData chunkData;
+    private ChunkRenderer chunkRenderer;
+
     private NativeList<GridModification> modifiers;
     private NativeArray<FillType> generateForFillTypes;
 
     private void OnEnable()
     {
-        meshFilter.sharedMesh = new Mesh();
+        chunkRenderer = ChunkRenderer.CreateNewInstance();
 
         Initialize();
     }
@@ -52,7 +51,7 @@ public class VoxelGrid : MonoBehaviour
         modifiers.Dispose();
         generateForFillTypes.Dispose();
 
-        DestroyImmediate(meshFilter.sharedMesh);
+        DestroyImmediate(chunkRenderer.gameObject);
     }
 
     public void ModifyGrid(GridModification modification)
@@ -87,30 +86,11 @@ public class VoxelGrid : MonoBehaviour
         };
         jobHandle = modifyOffsetsJob.Schedule(voxelCount, 64, jobHandle);
 
-        //Create polygons for all fill types
-        GenerateVoxelPolygonsJob generateVoxelPolygonsJob = new GenerateVoxelPolygonsJob()
-        {
-            resolution = resolution,
-            size = size,
-            generateForFillTypes = generateForFillTypes,
-            fillTypes = chunkData.fillTypes,
-            offsets = chunkData.offsets,
-            polygons = chunkData.polygons.ToConcurrent(),
-        };
-        jobHandle = generateVoxelPolygonsJob.Schedule(voxelCount, 64, jobHandle);
+        //Rendering
+        JobHandle meshHandle = chunkRenderer.ScheduleChunkJob(this, chunkData, jobHandle);
+        jobHandle = JobHandle.CombineDependencies(meshHandle, jobHandle);
 
-
-        GenerateMeshDataJob generateMeshDataJob = new GenerateMeshDataJob()
-        {
-            polygons = chunkData.polygons,
-            vertices = chunkData.vertices,
-            generateForFillTypes = generateForFillTypes,
-            triangleIndices = chunkData.triangleIndices,
-            triangleLengths = chunkData.triangleLengths,
-        };
-        jobHandle = generateMeshDataJob.Schedule(jobHandle);
-        jobHandle.Complete();
-
+        //Collision
         ColliderGenerationJob colliderGenerationJob = new ColliderGenerationJob()
         {
             resolution = resolution,
@@ -126,58 +106,30 @@ public class VoxelGrid : MonoBehaviour
             lengths = chunkData.colliderLengths,
             fillType = chunkData.colliderTypes,
         };
-//        Profiler.BeginSample("Create Colliders");
-//        colliderGenerationJob.Execute();
-//        Profiler.EndSample();
         jobHandle = colliderGenerationJob.Schedule(jobHandle);
         jobHandle.Complete();
 
+        chunkRenderer.OnJobCompleted();
+
         colliderGenerationJob.processed.Dispose();
 
-        //Temp immediate
-        meshFilter.sharedMesh.Clear();
-
-        int subMeshCount = GetSubMeshCount(chunkData);
-        Material[] materials = new Material[subMeshCount];
-        meshFilter.sharedMesh.subMeshCount = subMeshCount;
-        meshFilter.sharedMesh.vertices = chunkData.vertices.ToArray();
-
-        int offset = 0;
-        int currentSubMesh = 0;
-        for (int i = 0; i < chunkData.triangleLengths.Length; i++)
-        {
-            int length = chunkData.triangleLengths[i];
-            if (length != 0)
-            {
-                int[] triangles = chunkData.triangleIndices.ToArray(offset, length);
-                meshFilter.sharedMesh.SetTriangles(triangles, currentSubMesh);
-                materials[currentSubMesh] = materialTemplate.GetMaterial((FillType)(i + 1));
-                currentSubMesh++;
-            }
-            offset += length;
-        }
-        meshRenderer.sharedMaterials = materials;
-
     }
 
-    private int GetSubMeshCount(ChunkData chunkData)
-    {
-        int result = 0;
-        for (int i = 0; i < chunkData.triangleLengths.Length; i++)
-        {
-            if (chunkData.triangleLengths[i] != 0)
-                result++;
-        }
-
-        return result;
-    }
+//    private void LateUpdate()
+//    {
+//        if (chunkData.jobHandle != null)
+//        {
+//            chunkData.jobHandle.Value.Complete();
+//            chunkData.jobHandle = null;
+//        }
+//    }
 
     private void OnDrawGizmos()
     {
         if (chunkData == null)
             return;
 
-        //VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+        VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
         //VoxelGizmos.DrawColliders(transform, chunkData);
     }
 }
