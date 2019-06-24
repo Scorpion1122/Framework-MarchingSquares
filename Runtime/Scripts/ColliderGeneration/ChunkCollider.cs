@@ -4,6 +4,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class ChunkCollider : MonoBehaviour, IChunkJobDependency
 {
     private NativeList<float2> vertices;
@@ -29,6 +30,7 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
         lengths = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
         types = new NativeList<FillType>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
         processedCache = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
+        colliders = new List<EdgeCollider2D>();
     }
 
     private void OnDisable()
@@ -40,6 +42,9 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
         lengths.Dispose();
         types.Dispose();
         processedCache.Dispose();
+
+        EnsureColliderCapacity(0);
+        colliders = null;
     }
 
     private void ClearJobData()

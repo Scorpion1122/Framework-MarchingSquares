@@ -89,15 +89,15 @@ public class VoxelGrid : MonoBehaviour
 
         //Rendering
         JobHandle meshHandle = chunkRenderer.ScheduleChunkJob(this, chunkData, jobHandle);
-        //JobHandle colliderHandle = chunkCollider.ScheduleChunkJob(this, chunkData, jobHandle);
+        JobHandle colliderHandle = chunkCollider.ScheduleChunkJob(this, chunkData, jobHandle);
 
         jobHandle = JobHandle.CombineDependencies(meshHandle, jobHandle);
-        //jobHandle = JobHandle.CombineDependencies(colliderHandle, jobHandle);
+        jobHandle = JobHandle.CombineDependencies(colliderHandle, jobHandle);
 
         jobHandle.Complete();
 
         chunkRenderer.OnJobCompleted();
-        //chunkCollider.OnJobCompleted();
+        chunkCollider.OnJobCompleted();
     }
 
 //    private void LateUpdate()
@@ -114,7 +114,7 @@ public class VoxelGrid : MonoBehaviour
         if (chunkData == null)
             return;
 
-        VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+        //VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
         //VoxelGizmos.DrawColliders(transform, chunkData);
     }
 }
