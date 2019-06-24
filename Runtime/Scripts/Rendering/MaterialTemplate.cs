@@ -19,4 +19,9 @@ public class MaterialTemplate : ScriptableObject
                 throw new ArgumentOutOfRangeException(nameof(fillType), fillType, null);
         }
     }
+
+    public PhysicsMaterial2D GetPhysicsMaterial(FillType fillType)
+    {
+        return null;
+    }
 }

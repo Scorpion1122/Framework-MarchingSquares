@@ -83,6 +83,25 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
     public void OnJobCompleted()
     {
         EnsureColliderCapacity(lengths.Length);
+
+        int offset = 0;
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            int length = lengths[i];
+            FillType fillType = types[i];
+
+            EdgeCollider2D collider = colliders[i];
+            collider.sharedMaterial = currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
+            collider.points = new Vector2[length];
+
+            for (int j = 0; j < length; j++)
+            {
+                float2 vertex = vertices[j + offset];
+                collider.points[j] = new Vector2(vertex.x, vertex.y);
+            }
+
+            offset += length;
+        }
     }
 
     private void EnsureColliderCapacity(int amount)
