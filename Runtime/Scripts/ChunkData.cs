@@ -14,7 +14,7 @@ public class ChunkData : IDisposable
     public NativeList<Vector3> vertices;
     public NativeList<int> triangleIndices;
     public NativeList<int> triangleLengths;
-    
+
     //Collider Data
     public NativeList<float2> colliderVertices;
     public NativeList<int> colliderLengths;
@@ -27,18 +27,18 @@ public class ChunkData : IDisposable
         //Voxel Data
         fillTypes = new NativeArray<FillType>(resolution * resolution, Allocator.Persistent);
         offsets = new NativeArray<float2>(resolution * resolution, Allocator.Persistent);
-        
+
         //Mesh Data
         polygons = new NativeMultiHashMap<int, Polygon>(1000, Allocator.Persistent);
         vertices = new NativeList<Vector3>(resolution * resolution, Allocator.Persistent);
         triangleIndices = new NativeList<int>(resolution * resolution, Allocator.Persistent);
         triangleLengths = new NativeList<int>(resolution * resolution, Allocator.Persistent);
-        
+
         //Collider Data
         colliderVertices = new NativeList<float2>(Allocator.Persistent);
         colliderLengths = new NativeList<int>(Allocator.Persistent);
         colliderTypes = new NativeList<FillType>(Allocator.Persistent);
-        
+
         processedCache = new NativeList<int>(resolution * resolution, Allocator.Persistent);
     }
 
@@ -48,7 +48,7 @@ public class ChunkData : IDisposable
         vertices.Clear();
         triangleIndices.Clear();
         triangleLengths.Clear();
-        
+
         colliderVertices.Clear();
         colliderLengths.Clear();
         colliderTypes.Clear();
@@ -58,6 +58,7 @@ public class ChunkData : IDisposable
     {
         fillTypes.Dispose();
         offsets.Dispose();
+
         polygons.Dispose();
         vertices.Dispose();
         triangleIndices.Dispose();
@@ -66,7 +67,7 @@ public class ChunkData : IDisposable
         colliderVertices.Dispose();
         colliderLengths.Dispose();
         colliderTypes.Dispose();
-        
+
         processedCache.Dispose();
     }
 }

@@ -14,6 +14,12 @@ public class VoxelGrid : MonoBehaviour
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private MaterialTemplate materialTemplate;
 
+    public float Size => size;
+    public int Resolution => resolution;
+    public int VoxelsPerChunk => resolution * resolution;
+    public MaterialTemplate MaterialTemplate => materialTemplate;
+    public NativeArray<FillType> SupportedFillTypes => generateForFillTypes;
+
     private ChunkData chunkData;
     private NativeList<GridModification> modifiers;
     private NativeArray<FillType> generateForFillTypes;
@@ -59,7 +65,7 @@ public class VoxelGrid : MonoBehaviour
     private void ScheduleModifyChunkJob(ChunkData chunkData, NativeList<GridModification> modifiers)
     {
         chunkData.ClearTempData();
-        
+
         int voxelCount = chunkData.fillTypes.Length;
         ModifyFillTypeJob modifyFillJob = new ModifyFillTypeJob()
         {
@@ -104,18 +110,18 @@ public class VoxelGrid : MonoBehaviour
         };
         jobHandle = generateMeshDataJob.Schedule(jobHandle);
         jobHandle.Complete();
-        
+
         ColliderGenerationJob colliderGenerationJob = new ColliderGenerationJob()
         {
             resolution = resolution,
             size = size,
             fillTypes = chunkData.fillTypes,
             offsets = chunkData.offsets,
-            
+
             generateForFillTypes = generateForFillTypes,
-            
+
             processed = new NativeList<int>(1000, Allocator.TempJob),
-            
+
             vertices = chunkData.colliderVertices,
             lengths = chunkData.colliderLengths,
             fillType = chunkData.colliderTypes,
@@ -125,7 +131,7 @@ public class VoxelGrid : MonoBehaviour
 //        Profiler.EndSample();
         jobHandle = colliderGenerationJob.Schedule(jobHandle);
         jobHandle.Complete();
-        
+
         colliderGenerationJob.processed.Dispose();
 
         //Temp immediate
