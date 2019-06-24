@@ -44,30 +44,30 @@ public static class VoxelGizmos
         }
     }
 
-    public static void DrawColliders(Transform transform, ChunkData chunkData)
-    {
-        int offset = 0;
-        for (int i = 0; i < chunkData.colliderLengths.Length; i++)
-        {
-            FillType fillType = chunkData.colliderTypes[i];
-            int length = chunkData.colliderLengths[i];
-
-            Gizmos.color = GetColor(fillType);
-            for (int j = 0; j < length - 1; j++)
-            {
-                int index = offset + j;
-                int nextIndex = offset + j + 1;
-
-                float2 position = chunkData.colliderVertices[index];
-                float2 nextPosition = chunkData.colliderVertices[nextIndex];
-                
-                Vector3 worldPosition = transform.TransformPoint(new Vector3(position.x, position.y, 0));
-                Vector3 nextWorldPosition = transform.TransformPoint(new Vector3(nextPosition.x, nextPosition.y, 0));
-                Gizmos.DrawLine(worldPosition, nextWorldPosition);
-            }
-            Gizmos.color = Color.white;
-
-            offset += length;
-        }
-    }
+//    public static void DrawColliders(Transform transform, ChunkData chunkData)
+//    {
+//        int offset = 0;
+//        for (int i = 0; i < chunkData.colliderLengths.Length; i++)
+//        {
+//            FillType fillType = chunkData.colliderTypes[i];
+//            int length = chunkData.colliderLengths[i];
+//
+//            Gizmos.color = GetColor(fillType);
+//            for (int j = 0; j < length - 1; j++)
+//            {
+//                int index = offset + j;
+//                int nextIndex = offset + j + 1;
+//
+//                float2 position = chunkData.colliderVertices[index];
+//                float2 nextPosition = chunkData.colliderVertices[nextIndex];
+//                
+//                Vector3 worldPosition = transform.TransformPoint(new Vector3(position.x, position.y, 0));
+//                Vector3 nextWorldPosition = transform.TransformPoint(new Vector3(nextPosition.x, nextPosition.y, 0));
+//                Gizmos.DrawLine(worldPosition, nextWorldPosition);
+//            }
+//            Gizmos.color = Color.white;
+//
+//            offset += length;
+//        }
+//    }
 }

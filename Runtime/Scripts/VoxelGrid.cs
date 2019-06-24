@@ -19,6 +19,7 @@ public class VoxelGrid : MonoBehaviour
 
     private ChunkData chunkData;
     private ChunkRenderer chunkRenderer;
+    private ChunkCollider chunkCollider;
 
     private NativeList<GridModification> modifiers;
     private NativeArray<FillType> generateForFillTypes;
@@ -26,6 +27,7 @@ public class VoxelGrid : MonoBehaviour
     private void OnEnable()
     {
         chunkRenderer = ChunkRenderer.CreateNewInstance();
+        chunkCollider = ChunkCollider.CreateNewInstance();
 
         Initialize();
     }
@@ -52,6 +54,7 @@ public class VoxelGrid : MonoBehaviour
         generateForFillTypes.Dispose();
 
         DestroyImmediate(chunkRenderer.gameObject);
+        DestroyImmediate(chunkCollider.gameObject);
     }
 
     public void ModifyGrid(GridModification modification)
@@ -63,8 +66,6 @@ public class VoxelGrid : MonoBehaviour
 
     private void ScheduleModifyChunkJob(ChunkData chunkData, NativeList<GridModification> modifiers)
     {
-        chunkData.ClearTempData();
-
         int voxelCount = chunkData.fillTypes.Length;
         ModifyFillTypeJob modifyFillJob = new ModifyFillTypeJob()
         {
@@ -88,31 +89,15 @@ public class VoxelGrid : MonoBehaviour
 
         //Rendering
         JobHandle meshHandle = chunkRenderer.ScheduleChunkJob(this, chunkData, jobHandle);
+        //JobHandle colliderHandle = chunkCollider.ScheduleChunkJob(this, chunkData, jobHandle);
+
         jobHandle = JobHandle.CombineDependencies(meshHandle, jobHandle);
+        //jobHandle = JobHandle.CombineDependencies(colliderHandle, jobHandle);
 
-        //Collision
-        ColliderGenerationJob colliderGenerationJob = new ColliderGenerationJob()
-        {
-            resolution = resolution,
-            size = size,
-            fillTypes = chunkData.fillTypes,
-            offsets = chunkData.offsets,
-
-            generateForFillTypes = generateForFillTypes,
-
-            processed = new NativeList<int>(1000, Allocator.TempJob),
-
-            vertices = chunkData.colliderVertices,
-            lengths = chunkData.colliderLengths,
-            fillType = chunkData.colliderTypes,
-        };
-        jobHandle = colliderGenerationJob.Schedule(jobHandle);
         jobHandle.Complete();
 
         chunkRenderer.OnJobCompleted();
-
-        colliderGenerationJob.processed.Dispose();
-
+        //chunkCollider.OnJobCompleted();
     }
 
 //    private void LateUpdate()
