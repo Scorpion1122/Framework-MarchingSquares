@@ -10,6 +10,7 @@ public class VoxelGrid : MonoBehaviour
     [SerializeField] private int resolution = 128;
     [SerializeField] private float size = 1f;
     [SerializeField] private MaterialTemplate materialTemplate;
+    [SerializeField] private WorldGeneration worldGenerationTest;
 
     public float Size => size;
     public int Resolution => resolution;
@@ -35,6 +36,10 @@ public class VoxelGrid : MonoBehaviour
     private void Initialize()
     {
         chunkData = new ChunkData(resolution);
+        if (worldGenerationTest != null)
+            worldGenerationTest.GenerateChunkData(this, chunkData);
+
+
         modifiers = new NativeList<GridModification>(Allocator.Persistent);
 
         FillType[] allFillTypes = (FillType[])Enum.GetValues(typeof(FillType));
@@ -117,7 +122,7 @@ public class VoxelGrid : MonoBehaviour
         Gizmos.DrawWireCube(
             transform.position + new Vector3(0.5f, 0.5f, 0) * resolution * size,
             new Vector3(1 * size, 1 * size, 0) * resolution);
-        //VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+        VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
         //VoxelGizmos.DrawColliders(transform, chunkData);
     }
 }
