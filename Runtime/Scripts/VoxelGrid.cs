@@ -114,7 +114,10 @@ public class VoxelGrid : MonoBehaviour
         if (chunkData == null)
             return;
 
-        VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+        Gizmos.DrawWireCube(
+            transform.position + new Vector3(0.5f, 0.5f, 0) * resolution * size,
+            new Vector3(1 * size, 1 * size, 0) * resolution);
+        //VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
         //VoxelGizmos.DrawColliders(transform, chunkData);
     }
 }
