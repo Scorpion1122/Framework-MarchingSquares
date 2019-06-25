@@ -12,37 +12,37 @@ public struct ColliderGenerationJob : IJob
     [ReadOnly] public NativeArray<FillType> fillTypes;
     [ReadOnly] public NativeArray<float2> offsets;
 
-    [ReadOnly] public NativeArray<FillType> generateForFillTypes;
+    [ReadOnly] public NativeArray<FillType> supportedFillTypes;
 
     //Types / Indices
     //public NativeMultiHashMap<int, int> processed;
     public NativeList<int> processed;
 
     [WriteOnly] public NativeList<float2> vertices;
-    [WriteOnly] public NativeList<FillType> fillType;
+    [WriteOnly] public NativeList<FillType> colliderFillTypes;
     [WriteOnly] public NativeList<int> lengths;
     private int currentLength;
     private int startIndex;
 
     public void Execute()
     {
-        for (int i = 0; i < fillTypes.Length; i++)
+        for (int i = 0; i < supportedFillTypes.Length; i++)
         {
-            Execute(i);
+            Execute(supportedFillTypes[i]);
         }
     }
 
-    private void Execute(int index)
+    private void Execute(FillType fillType)
     {
         processed.Clear();
-        for (int i = 0; i < generateForFillTypes.Length; i++)
+        for (int i = 0; i < fillTypes.Length; i++)
         {
-            if (processed.Contains(index))
+            if (processed.Contains(i))
             {
                 continue;
             }
 
-            Execute(index, generateForFillTypes[i]);
+            Execute(i, fillType);
         }
     }
 
@@ -66,7 +66,7 @@ public struct ColliderGenerationJob : IJob
         if (currentLength != 0)
         {
             this.lengths.Add(currentLength);
-            this.fillType.Add(fillType);
+            this.colliderFillTypes.Add(fillType);
         }
     }
 

@@ -67,12 +67,12 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
             size = currentGrid.Size,
             fillTypes = chunkData.fillTypes,
             offsets = chunkData.offsets,
-            generateForFillTypes = currentGrid.SupportedFillTypes,
+            supportedFillTypes = currentGrid.SupportedFillTypes,
 
             //Output
             vertices = vertices,
             lengths = lengths,
-            fillType = types,
+            colliderFillTypes = types,
             processed = processedCache,
         };
         currentJobHandle = colliderGenerationJob.Schedule(dependency);
@@ -92,13 +92,14 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
 
             EdgeCollider2D collider = colliders[i];
             collider.sharedMaterial = currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
-            collider.points = new Vector2[length];
-
+            
+            Vector2[] points = new Vector2[length];
             for (int j = 0; j < length; j++)
             {
                 float2 vertex = vertices[j + offset];
-                collider.points[j] = new Vector2(vertex.x, vertex.y);
+                points[j] = new Vector2(vertex.x, vertex.y);
             }
+            collider.points = points;
 
             offset += length;
         }
