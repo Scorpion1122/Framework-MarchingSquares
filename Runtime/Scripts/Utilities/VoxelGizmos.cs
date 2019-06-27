@@ -20,7 +20,7 @@ public static class VoxelGizmos
 
         Gizmos.color = GetColor(fillType);
 
-        float2 position = VoxelUtility.IndexToPosition(index, resolution, size);
+        float2 position = VoxelUtility.IndexToPosition(index, resolution, size) + chunkData.origin;
 
         Vector3 worldPosition = transform.TransformPoint(new Vector3(position.x, position.y, 0));
         Gizmos.DrawSphere(worldPosition, size * 0.1f);
@@ -60,7 +60,7 @@ public static class VoxelGizmos
 //
 //                float2 position = chunkData.colliderVertices[index];
 //                float2 nextPosition = chunkData.colliderVertices[nextIndex];
-//                
+//
 //                Vector3 worldPosition = transform.TransformPoint(new Vector3(position.x, position.y, 0));
 //                Vector3 nextWorldPosition = transform.TransformPoint(new Vector3(nextPosition.x, nextPosition.y, 0));
 //                Gizmos.DrawLine(worldPosition, nextWorldPosition);

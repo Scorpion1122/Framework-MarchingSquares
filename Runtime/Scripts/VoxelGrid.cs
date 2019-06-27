@@ -1,29 +1,38 @@
 ﻿using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.Serialization;
 
 [ExecuteInEditMode]
 public class VoxelGrid : MonoBehaviour
 {
-    [SerializeField] private int resolution = 128;
-    [SerializeField] private float size = 1f;
+    [SerializeField] private int gridResolution = 2;
+
+    [Header("Chunk Configuration")]
+    [FormerlySerializedAs("resolution")] [SerializeField] private int chunkResolution = 128;
+    [FormerlySerializedAs("size")] [SerializeField] private float voxelSize = 1f;
     [SerializeField] private MaterialTemplate materialTemplate;
     [SerializeField] private WorldGeneration worldGenerationTest;
 
-    public float Size => size;
-    public int Resolution => resolution;
-    public int VoxelsPerChunk => resolution * resolution;
+    public float VoxelSize => voxelSize;
+    public int ChunkResolution => chunkResolution;
+    public int VoxelsPerChunk => chunkResolution * chunkResolution;
     public MaterialTemplate MaterialTemplate => materialTemplate;
     public NativeArray<FillType> SupportedFillTypes => generateForFillTypes;
 
-    private ChunkData chunkData;
     private ChunkRenderer chunkRenderer;
     private ChunkCollider chunkCollider;
 
-    private NativeList<GridModification> modifiers;
+    private float chunkSize;
+    private ChunkData[] chunks;
+
     private NativeArray<FillType> generateForFillTypes;
+    private List<ChunkData> activeJobHandles;
+    private HashSet<int> dirtyChunks;
 
     private void OnEnable()
     {
@@ -35,12 +44,17 @@ public class VoxelGrid : MonoBehaviour
 
     private void Initialize()
     {
-        chunkData = new ChunkData(resolution);
-        if (worldGenerationTest != null)
-            worldGenerationTest.GenerateChunkData(this, chunkData);
+        chunkSize = voxelSize * chunkResolution;
 
+        dirtyChunks = new HashSet<int>();
+        activeJobHandles = new List<ChunkData>();
 
-        modifiers = new NativeList<GridModification>(Allocator.Persistent);
+        chunks = new ChunkData[gridResolution * gridResolution];
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            float2 origin = ChunkUtility.GetChunkOrigin(i, gridResolution, chunkSize);
+            chunks[i] = new ChunkData(origin, chunkSize, chunkResolution);
+        }
 
         FillType[] allFillTypes = (FillType[])Enum.GetValues(typeof(FillType));
         generateForFillTypes = new NativeArray<FillType>(allFillTypes.Length - 1, Allocator.Persistent);
@@ -52,10 +66,12 @@ public class VoxelGrid : MonoBehaviour
 
     private void OnDisable()
     {
-        chunkData.Dispose();
-        chunkData = null;
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            chunks[i].Dispose();
+        }
+        chunks = null;
 
-        modifiers.Dispose();
         generateForFillTypes.Dispose();
 
         DestroyImmediate(chunkRenderer.gameObject);
@@ -64,19 +80,78 @@ public class VoxelGrid : MonoBehaviour
 
     public void ModifyGrid(GridModification modification)
     {
-        modifiers.Add(modification);
-        ScheduleModifyChunkJob(chunkData, modifiers);
-        modifiers.Clear();
+        Rect modificationBounds = modification.GetBounds();
+
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            ChunkData chunk = chunks[i];
+            if (chunk == null)
+                continue;
+
+            Rect chunkBounds = chunk.GetBounds();
+            Debug.Log(chunkBounds.Intersects(modificationBounds));
+            if (chunkBounds.Intersects(modificationBounds))
+                AddModifierToChunk(9, modification);
+        }
     }
 
-    private void ScheduleModifyChunkJob(ChunkData chunkData, NativeList<GridModification> modifiers)
+    private void AddModifierToChunk(int index, GridModification modification)
+    {
+        if (!ChunkUtility.IsChunkIndexValid(index, gridResolution))
+            return;
+
+        ChunkData chunkData = chunks[index];
+        if (chunkData == null)
+            return;
+
+        modification.position = modification.position - chunkData.origin;
+        chunkData.modifiers.Add(modification);
+
+        if (!dirtyChunks.Contains(index))
+            dirtyChunks.Add(index);
+    }
+
+    private void LateUpdate()
+    {
+        ScheduleModifyChunkJobs();
+    }
+
+    private void ScheduleModifyChunkJobs()
+    {
+        if (dirtyChunks.Count == 0)
+            return;
+
+        foreach (int chunkIndex in dirtyChunks)
+        {
+            ChunkData chunkData = chunks[chunkIndex];
+            if (chunkData == null)
+                continue;
+
+            ScheduleModifyChunkJob(chunkData);
+            activeJobHandles.Add(chunkData);
+        }
+
+        JobHandle.ScheduleBatchedJobs();
+
+        foreach (ChunkData chunkData in activeJobHandles)
+        {
+            if (chunkData.jobHandle != null)
+            {
+                chunkData.jobHandle.Value.Complete();
+                chunkData.modifiers.Clear();
+            }
+            chunkData.jobHandle = null;
+        }
+    }
+
+    private void ScheduleModifyChunkJob(ChunkData chunkData)
     {
         int voxelCount = chunkData.fillTypes.Length;
         ModifyFillTypeJob modifyFillJob = new ModifyFillTypeJob()
         {
-            resolution = resolution,
-            size = size,
-            modifiers = modifiers,
+            resolution = chunkResolution,
+            size = voxelSize,
+            modifiers = chunkData.modifiers,
             fillTypes = chunkData.fillTypes,
         };
         JobHandle jobHandle = modifyFillJob.Schedule(voxelCount, 64);
@@ -84,45 +159,45 @@ public class VoxelGrid : MonoBehaviour
         ModifyOffsetsJob modifyOffsetsJob = new ModifyOffsetsJob()
         {
 
-            resolution = resolution,
-            size = size,
-            modifiers = modifiers,
+            resolution = chunkResolution,
+            size = voxelSize,
+            modifiers = chunkData.modifiers,
             fillTypes = chunkData.fillTypes,
             offsets = chunkData.offsets,
         };
         jobHandle = modifyOffsetsJob.Schedule(voxelCount, 64, jobHandle);
 
         //Rendering
-        JobHandle meshHandle = chunkRenderer.ScheduleChunkJob(this, chunkData, jobHandle);
-        JobHandle colliderHandle = chunkCollider.ScheduleChunkJob(this, chunkData, jobHandle);
+//        JobHandle meshHandle = chunkRenderer.ScheduleChunkJob(this, chunkData, jobHandle);
+//        JobHandle colliderHandle = chunkCollider.ScheduleChunkJob(this, chunkData, jobHandle);
+//
+//        jobHandle = JobHandle.CombineDependencies(meshHandle, jobHandle);
+//        jobHandle = JobHandle.CombineDependencies(colliderHandle, jobHandle);
 
-        jobHandle = JobHandle.CombineDependencies(meshHandle, jobHandle);
-        jobHandle = JobHandle.CombineDependencies(colliderHandle, jobHandle);
+        //jobHandle.Complete();
 
-        jobHandle.Complete();
+//        chunkRenderer.OnJobCompleted();
+//        chunkCollider.OnJobCompleted();
 
-        chunkRenderer.OnJobCompleted();
-        chunkCollider.OnJobCompleted();
+        chunkData.jobHandle = jobHandle;
     }
-
-//    private void LateUpdate()
-//    {
-//        if (chunkData.jobHandle != null)
-//        {
-//            chunkData.jobHandle.Value.Complete();
-//            chunkData.jobHandle = null;
-//        }
-//    }
 
     private void OnDrawGizmos()
     {
-        if (chunkData == null)
+        if (chunks == null)
             return;
 
         Gizmos.DrawWireCube(
-            transform.position + new Vector3(0.5f, 0.5f, 0) * resolution * size,
-            new Vector3(1 * size, 1 * size, 0) * resolution);
-        VoxelGizmos.DrawVoxels(transform, chunkData, resolution, size);
+            transform.position + new Vector3(0.5f, 0.5f, 0) * chunkResolution * voxelSize,
+            new Vector3(1 * voxelSize, 1 * voxelSize, 0) * chunkResolution);
+
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            ChunkData chunkData = chunks[i];
+            if (chunkData != null)
+                VoxelGizmos.DrawVoxels(transform, chunkData, chunkResolution, voxelSize);
+        }
+
         //VoxelGizmos.DrawColliders(transform, chunkData);
     }
 }

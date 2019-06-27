@@ -63,8 +63,8 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
         ColliderGenerationJob colliderGenerationJob = new ColliderGenerationJob()
         {
             //Input
-            resolution = currentGrid.Resolution,
-            size = currentGrid.Size,
+            resolution = currentGrid.ChunkResolution,
+            size = currentGrid.VoxelSize,
             fillTypes = chunkData.fillTypes,
             offsets = chunkData.offsets,
             supportedFillTypes = currentGrid.SupportedFillTypes,

@@ -10,7 +10,7 @@ public struct ModifyFillTypeJob : IJobParallelFor
     [ReadOnly] public float size;
     [ReadOnly] public NativeList<GridModification> modifiers;
     public NativeArray<FillType> fillTypes;
-    
+
     public void Execute(int index)
     {
         float2 voxelPosition = VoxelUtility.IndexToPosition(index, resolution, size);
@@ -31,12 +31,12 @@ public struct ModifyFillTypeJob : IJobParallelFor
 
         fillTypes[index] = fillType;
     }
-    
+
     private FillType RunCircleModifier(FillType fillType, float2 voxelPosition, GridModification modifier)
     {
         float2 difference = voxelPosition - modifier.position;
         float distance = math.length(difference);
-        
+
         //Update Voxel Type
         if (distance < modifier.size)
         {
@@ -44,7 +44,7 @@ public struct ModifyFillTypeJob : IJobParallelFor
         }
         return fillType;
     }
-    
+
     private FillType RunSquareModifier(FillType fillType, float2 voxelPosition, GridModification modifier)
     {
         float2 min = new float2(modifier.position.x - modifier.size, modifier.position.y - modifier.size);

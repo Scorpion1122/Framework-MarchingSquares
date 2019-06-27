@@ -69,8 +69,8 @@ public class ChunkRenderer : MonoBehaviour, IChunkJobDependency
         ClearJobData();
         GenerateVoxelPolygonsJob generateVoxelPolygonsJob = new GenerateVoxelPolygonsJob()
         {
-            resolution = currentGrid.Resolution,
-            size = currentGrid.Size,
+            resolution = currentGrid.ChunkResolution,
+            size = currentGrid.VoxelSize,
             generateForFillTypes = currentGrid.SupportedFillTypes,
             fillTypes = chunkData.fillTypes,
             offsets = chunkData.offsets,
