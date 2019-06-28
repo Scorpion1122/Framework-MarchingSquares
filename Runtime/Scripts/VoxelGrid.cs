@@ -18,6 +18,9 @@ public class VoxelGrid : MonoBehaviour
     [SerializeField] private MaterialTemplate materialTemplate;
     [SerializeField] private WorldGeneration worldGenerationTest;
 
+    [Header("Debug")]
+    [SerializeField] private bool drawGizmos = false;
+
     public float VoxelSize => voxelSize;
     public int ChunkResolution => chunkResolution + 1;
     public int VoxelsPerChunk => ChunkResolution * ChunkResolution;
@@ -214,7 +217,7 @@ public class VoxelGrid : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (chunks == null)
+        if (chunks == null || !drawGizmos)
             return;
 
         for (int i = chunks.Length - 1; i >= 0; i--)
