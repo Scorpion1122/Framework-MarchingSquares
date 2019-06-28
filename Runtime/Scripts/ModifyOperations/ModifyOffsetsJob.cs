@@ -33,6 +33,8 @@ public struct ModifyOffsetsJob : IJobParallelFor
                     break;
             }
         }
+
+        UpdateOffsetsForNeighbourChunk(index);
     }
 
     private bool ShouldZeroOutOffsets(int index)
@@ -45,7 +47,26 @@ public struct ModifyOffsetsJob : IJobParallelFor
         {
             return true;
         }
+
         return false;
+    }
+
+    private void UpdateOffsetsForNeighbourChunk(int index)
+    {
+        float2 offset = offsets[index];
+
+        int2 index2 = VoxelUtility.IndexToIndex2(index, resolution);
+        if (index2.x == resolution - 1)
+        {
+            offset.x = 0f;
+        }
+
+        if (index2.y == resolution - 1)
+        {
+            offset.y = 0f;
+        }
+
+        offsets[index] = offset;
     }
 
     private void RunCircleModifier(int index, GridModification modifier)

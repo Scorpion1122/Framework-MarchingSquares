@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -8,6 +9,7 @@ public class ChunkData : IDisposable
 {
     public float2 origin;
     public float size;
+    public int resolution;
 
     //Voxel Data
     public NativeArray<FillType> fillTypes;
@@ -17,9 +19,11 @@ public class ChunkData : IDisposable
     public NativeList<GridModification> modifiers;
 
     public JobHandle? jobHandle;
+    public List<IChunkJobDependency> dependencies;
 
-    public ChunkData(float2 chunkOrigin, float chunkSize, int resolution)
+    public ChunkData(float2 chunkOrigin, float chunkSize, int chunkResolution)
     {
+        resolution = chunkResolution;
         origin = chunkOrigin;
         size = chunkSize;
 
@@ -29,6 +33,8 @@ public class ChunkData : IDisposable
 
         //Modifiers
         modifiers = new NativeList<GridModification>(100, Allocator.Persistent);
+
+        dependencies = new List<IChunkJobDependency>();
     }
 
     public void Dispose()

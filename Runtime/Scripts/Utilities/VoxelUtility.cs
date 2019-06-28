@@ -26,6 +26,14 @@ public static class VoxelUtility
                 return index.x + index.y * resolution;
         }
 
+        //Neighbour chunk voxels are duplicate voxels that share data with the neighbouring chunk
+        //This is only on the top and left side of the chunk
+        public static bool IsNeighbourChunkVoxel(int index, int resolution)
+        {
+            int2 index2 = IndexToIndex2(index, resolution);
+            return index2.x == resolution - 1 || index2.y == resolution - 1;
+        }
+
         //None
         //0:  FillType.None, FillType.None, FillType.None, FillType.None
 

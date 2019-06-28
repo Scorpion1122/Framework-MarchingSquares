@@ -5,11 +5,11 @@ using UnityEngine;
 
 public static class VoxelGizmos
 {
-    public static void DrawVoxels(Transform transform, ChunkData chunkData, int resolution, float size)
+    public static void DrawVoxels(Transform transform, ChunkData chunkData, float size)
     {
-        for (int i = 0; i < resolution * resolution; i++)
+        for (int i = 0; i < chunkData.resolution * chunkData.resolution; i++)
         {
-            DrawVoxel(transform, chunkData, i, resolution, size);
+            DrawVoxel(transform, chunkData, i, chunkData.resolution, size);
         }
     }
 

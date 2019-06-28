@@ -46,10 +46,13 @@ public class ChunkRenderer : MonoBehaviour, IChunkJobDependency
         if (currentJobHandle != null)
             currentJobHandle.Value.Complete();
 
-        polygons.Dispose();
-        vertices.Dispose();
-        triangleIndices.Dispose();
-        triangleLengths.Dispose();
+        if (polygons.IsCreated)
+        {
+            polygons.Dispose();
+            vertices.Dispose();
+            triangleIndices.Dispose();
+            triangleLengths.Dispose();
+        }
 
         DestroyImmediate(sharedMesh);
     }

@@ -38,12 +38,13 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
         if (currentJobHandle != null)
             currentJobHandle.Value.Complete();
 
-        vertices.Dispose();
-        lengths.Dispose();
-        types.Dispose();
-        processedCache.Dispose();
-
-        EnsureColliderCapacity(0);
+        if (vertices.IsCreated)
+        {
+            vertices.Dispose();
+            lengths.Dispose();
+            types.Dispose();
+            processedCache.Dispose();
+        }
         colliders = null;
     }
 
@@ -92,7 +93,7 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
 
             EdgeCollider2D collider = colliders[i];
             collider.sharedMaterial = currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
-            
+
             Vector2[] points = new Vector2[length];
             for (int j = 0; j < length; j++)
             {
@@ -107,6 +108,9 @@ public class ChunkCollider : MonoBehaviour, IChunkJobDependency
 
     private void EnsureColliderCapacity(int amount)
     {
+        if (colliders == null)
+            return;
+
         int overflow = colliders.Count - amount;
         for (int i = 0; i < overflow; i++)
         {
