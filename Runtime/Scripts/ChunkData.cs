@@ -40,9 +40,6 @@ public class ChunkData : IDisposable
 
     public Rect GetBounds()
     {
-        return new Rect(
-            origin.x + size * 0.5f,
-            origin.y + size * 0.5f,
-            size, size);
+        return new Rect(origin, new float2(size, size));
     }
 }

@@ -10,6 +10,9 @@ public struct GridModification
 
     public Rect GetBounds()
     {
-        return new Rect(position, Vector2.one * size);
+        float2 rectSize = new float2(1, 1) * size;
+        float2 rectPosition = position - rectSize * 0.5f;
+        //Rect position is bottom left as pivot, not the center
+        return new Rect(rectPosition, rectSize);
     }
 }

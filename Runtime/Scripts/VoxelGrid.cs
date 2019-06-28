@@ -81,7 +81,6 @@ public class VoxelGrid : MonoBehaviour
     public void ModifyGrid(GridModification modification)
     {
         Rect modificationBounds = modification.GetBounds();
-
         for (int i = 0; i < chunks.Length; i++)
         {
             ChunkData chunk = chunks[i];
@@ -89,9 +88,8 @@ public class VoxelGrid : MonoBehaviour
                 continue;
 
             Rect chunkBounds = chunk.GetBounds();
-            Debug.Log(chunkBounds.Intersects(modificationBounds));
             if (chunkBounds.Intersects(modificationBounds))
-                AddModifierToChunk(9, modification);
+                AddModifierToChunk(i, modification);
         }
     }
 
@@ -130,6 +128,7 @@ public class VoxelGrid : MonoBehaviour
             ScheduleModifyChunkJob(chunkData);
             activeJobHandles.Add(chunkData);
         }
+        dirtyChunks.Clear();
 
         JobHandle.ScheduleBatchedJobs();
 
