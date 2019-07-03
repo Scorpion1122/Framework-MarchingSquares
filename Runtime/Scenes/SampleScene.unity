@@ -693,10 +693,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridResolution: 1
-  chunkResolution: 8
-  voxelSize: 0.25
+  chunkResolution: 16
+  voxelSize: 1
   materialTemplate: {fileID: 11400000, guid: 5bdcbec4e881c6d4f8e48be8325dce84, type: 2}
-  worldGenerationTest: {fileID: 1987310622}
+  worldGenerationTest: {fileID: 0}
   drawGizmos: 1
 --- !u!4 &1987310621
 Transform:

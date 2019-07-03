@@ -178,18 +178,6 @@ public class VoxelGrid : MonoBehaviour
             jobHandle = JobHandle.CombineDependencies(dependencyHandle, jobHandle);
         }
 
-        //Rendering
-//        JobHandle meshHandle = chunkRenderer.ScheduleChunkJob(this, chunkData, jobHandle);
-//        JobHandle colliderHandle = chunkCollider.ScheduleChunkJob(this, chunkData, jobHandle);
-//
-//        jobHandle = JobHandle.CombineDependencies(meshHandle, jobHandle);
-//        jobHandle = JobHandle.CombineDependencies(colliderHandle, jobHandle);
-
-        //jobHandle.Complete();
-
-//        chunkRenderer.OnJobCompleted();
-//        chunkCollider.OnJobCompleted();
-
         chunkData.jobHandle = jobHandle;
     }
 

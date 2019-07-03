@@ -1,8 +1,8 @@
-﻿using Unity.Burst;
+﻿using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine.Profiling;
 
 [BurstCompile]
 public struct ColliderGenerationJob : IJob
@@ -21,6 +21,7 @@ public struct ColliderGenerationJob : IJob
     [WriteOnly] public NativeList<float2> vertices;
     [WriteOnly] public NativeList<FillType> colliderFillTypes;
     [WriteOnly] public NativeList<int> lengths;
+    private float2 startPosition;
     private int currentLength;
     private int startIndex;
 
@@ -37,10 +38,11 @@ public struct ColliderGenerationJob : IJob
         processed.Clear();
         for (int i = 0; i < fillTypes.Length; i++)
         {
-            if (processed.Contains(i))
-            {
+            if (VoxelUtility.IsNeighbourChunkVoxel(i, resolution))
                 continue;
-            }
+            
+            if (processed.Contains(i))
+                continue;
 
             Execute(i, fillType);
         }
@@ -59,9 +61,16 @@ public struct ColliderGenerationJob : IJob
 
         currentLength = 0;
         startIndex = index;
+        startIndex = FindStartIndex(index, fillType);
         
-        processed.Add(index);
-        MoveToNextVoxel(index, fillType, voxelType);
+        voxelType = VoxelUtility.GetVoxelShape(
+            startIndex,
+            fillType,
+            fillTypes,
+            resolution);
+        
+        processed.Add(startIndex);
+        MoveToNextVoxelCW(startIndex, fillType, voxelType);
 
         if (currentLength != 0)
         {
@@ -74,6 +83,7 @@ public struct ColliderGenerationJob : IJob
     {
         if (index == startIndex)
         {
+            AddVertex(startPosition);
             return;
         }
 
@@ -87,10 +97,11 @@ public struct ColliderGenerationJob : IJob
             return;
 
         processed.Add(index);
-        MoveToNextVoxel(index, fillType, voxelType);
+        MoveToNextVoxelCW(index, fillType, voxelType);
     }
 
-    private void MoveToNextVoxel(int index, FillType fillType, int voxelType)
+    //Clock wise
+    private void MoveToNextVoxelCW(int index, FillType fillType, int voxelType)
     {
         int topIndex = index + resolution;
         int topRightIndex = index + resolution + 1;
@@ -114,51 +125,43 @@ public struct ColliderGenerationJob : IJob
 
             //One Corner, Bottom Left
             case 1:
-                vertices.Add(curPosition + new float2(currentOffset.x, 0));
-                currentLength++;
+                AddVertex(curPosition + new float2(currentOffset.x, 0));
                 directionToNextVoxel = new int2(0, -1);
                 break;
             //One Corner, Top Left
             case 2:
-                vertices.Add(curPosition + new float2(0, currentOffset.y));
-                currentLength++;
+                AddVertex(curPosition + new float2(0, currentOffset.y));
                 directionToNextVoxel = new int2(-1, 0);
                 break;
             //One Corner, Top Right
             case 4:
-                vertices.Add(topPosition + new float2(topOffset.x, 0));
-                currentLength++;
+                AddVertex(topPosition + new float2(topOffset.x, 0));
                 directionToNextVoxel = new int2(0, 1);
                 break;
             //One Corner, Bottom Right
             case 8:
-                vertices.Add(rightPosition + new float2(0, rightOffset.y));
-                currentLength++;
+                AddVertex(rightPosition + new float2(0, rightOffset.y));
                 directionToNextVoxel = new int2(1, 0);
                 break;
 
             //Two Corners, Left
             case 3:
-                vertices.Add(curPosition + new float2(currentOffset.x, 0));
-                currentLength++;
+                AddVertex(curPosition + new float2(currentOffset.x, 0));
                 directionToNextVoxel = new int2(0, -1);
                 break;
             //Two Corners, Top
             case 6:
-                vertices.Add(curPosition + new float2(0, currentOffset.y));
-                currentLength++;
+                AddVertex(curPosition + new float2(0, currentOffset.y));
                 directionToNextVoxel = new int2(-1, 0);
                 break;
             //Two Corners, Right
             case 12:
-                vertices.Add(topPosition + new float2(topOffset.x, 0));
-                currentLength++;
+                AddVertex(topPosition + new float2(topOffset.x, 0));
                 directionToNextVoxel = new int2(0, 1);
                 break;
             //Two Corners, Bottom
             case 9:
-                vertices.Add(rightPosition + new float2(0, rightOffset.y));
-                currentLength++;
+                AddVertex(rightPosition + new float2(0, rightOffset.y));
                 directionToNextVoxel = new int2(1, 0);
                 break;
 
@@ -186,23 +189,19 @@ public struct ColliderGenerationJob : IJob
 
             //Three Corners
             case 7:
-                vertices.Add(curPosition + new float2(currentOffset.x, 0));
-                currentLength++;
+                AddVertex(curPosition + new float2(currentOffset.x, 0));
                 directionToNextVoxel = new int2(0, -1);
                 break;
             case 14:
-                vertices.Add(curPosition + new float2(0, currentOffset.y));
-                currentLength++;
+                AddVertex(curPosition + new float2(0, currentOffset.y));
                 directionToNextVoxel = new int2(-1, 0);
                 break;
             case 13:
-                vertices.Add(topPosition + new float2(topOffset.x, 0));
-                currentLength++;
+                AddVertex(topPosition + new float2(topOffset.x, 0));
                 directionToNextVoxel = new int2(0, 1);
                 break;
             case 11:
-                vertices.Add(rightPosition + new float2(0, rightOffset.y));
-                currentLength++;
+                AddVertex(rightPosition + new float2(0, rightOffset.y));
                 directionToNextVoxel = new int2(1, 0);
                 break;
         }
@@ -212,11 +211,128 @@ public struct ColliderGenerationJob : IJob
         
         int2 newPosition = VoxelUtility.IndexToIndex2(index, resolution) + directionToNextVoxel;
         if (newPosition.x < 0 
-            || newPosition.x >= resolution
+            || newPosition.x > resolution
             || newPosition.y < 0
-            || newPosition.y >= resolution)
+            || newPosition.y > resolution)
             return;
 
         MoveToNextVoxel(VoxelUtility.Index2ToIndex(newPosition, resolution), fillType);
+    }
+
+    private int FindStartIndex(int index, FillType fillType)
+    {
+        int voxelType = VoxelUtility.GetVoxelShape(
+            index,
+            fillType,
+            fillTypes,
+            resolution);
+        
+        int2 directionToNextVoxel = int2.zero;
+        switch (voxelType)
+        {
+            //None
+            default:
+                throw new IndexOutOfRangeException();
+
+            //One Corner, Bottom Left
+            case 1:
+                directionToNextVoxel = new int2(-1, 0);
+                break;
+            //One Corner, Top Left
+            case 2:
+                directionToNextVoxel = new int2(0, 1);
+                break;
+            //One Corner, Top Right
+            case 4:
+                directionToNextVoxel = new int2(1, 0);
+                break;
+            //One Corner, Bottom Right
+            case 8:
+                directionToNextVoxel = new int2(0, -1);
+                break;
+            
+            //Two Corners, Left
+            case 3:
+                directionToNextVoxel = new int2(0, 1);
+                break;
+            //Two Corners, Top
+            case 6:
+                directionToNextVoxel = new int2(1, 0);
+                break;
+            //Two Corners, Right
+            case 12:
+                directionToNextVoxel = new int2(0, -1);
+                break;
+            //Two Corners, Bottom
+            case 9:
+                directionToNextVoxel = new int2(-1, 0);
+                break;
+
+            case 5:
+                return index;
+            case 10:
+                return index;
+            //Opposite Corners
+            /*case 5:
+                AddCrossCornerPolygon(
+                    fillType,
+                    curPosition,
+                    curPosition + new float2(0, currentOffset.y),
+                    curPosition + new float2(currentOffset.x, 0),
+                    topRightPosition,
+                    rightPosition + new float2(0, rightOffset.y),
+                    topPosition + new float2(topOffset.x, 0));
+                break;
+            case 10:
+                AddCrossCornerPolygon(
+                    fillType,
+                    topPosition,
+                    topPosition + new float2(topOffset.x, 0),
+                    curPosition + new float2(0, currentOffset.y),
+                    rightPosition,
+                    curPosition + new float2(currentOffset.x, 0),
+                    rightPosition + new float2(0, rightOffset.y));
+                break;*/
+
+            //Three Corners
+            //Right (Empty)
+            case 7:
+                directionToNextVoxel = new int2(1, 0);
+                break;
+            //Left (Empty)
+            case 14:
+                directionToNextVoxel = new int2(0, -1);
+                break;
+            //Top Left (Empty)
+            case 13:
+                directionToNextVoxel = new int2(-1, 0);
+                break;
+            //Top Right (Empty)
+            case 11:
+                directionToNextVoxel = new int2(0, 1);
+                break;
+        }
+        
+        int2 newPosition = VoxelUtility.IndexToIndex2(index, resolution) + directionToNextVoxel;
+        if (newPosition.x < 0 
+            || newPosition.x > resolution
+            || newPosition.y < 0
+            || newPosition.y > resolution)
+            return index;
+
+        int nextIndex = VoxelUtility.Index2ToIndex(newPosition, resolution);
+        if (nextIndex == startIndex)
+            return startIndex;
+        
+        return FindStartIndex(nextIndex, fillType);
+    }
+
+    private void AddVertex(float2 vertex)
+    {
+        if (currentLength == 0)
+            startPosition = vertex;
+        
+        vertices.Add(vertex);
+        currentLength++;
     }
 }

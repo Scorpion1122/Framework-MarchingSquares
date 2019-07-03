@@ -8,7 +8,7 @@ public class VoxelGridEditor : Editor
 {
     private ModifierType modifierType = ModifierType.Circle;
     private FillType fillType = FillType.TypeOne;
-    private float modifierSize = 1;
+    private float modifierSize = 0.5f;
 
     private bool didPress;
 
