@@ -60,11 +60,15 @@ namespace Thijs.Framework.MarchingSquares
             {
                 float2 origin = ChunkUtility.GetChunkOrigin(i, gridResolution, chunkSize);
                 chunks[i] = new ChunkData(origin, chunkSize, chunkResolution + 1);
+                
+                //Generate Data
+                worldGenerationTest.GenerateChunkData(this, chunks[i]);
+                dirtyChunks.Add(i);
 
-                renderers[i] = ChunkRenderer.CreateNewInstance();
+                renderers[i] = ChunkRenderer.CreateNewInstance(transform);
                 renderers[i].transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
 
-                colliders[i] = ChunkCollider.CreateNewInstance();
+                colliders[i] = ChunkCollider.CreateNewInstance(transform);
                 colliders[i].transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
             }
 

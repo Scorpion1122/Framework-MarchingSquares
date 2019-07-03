@@ -19,10 +19,11 @@ namespace Thijs.Framework.MarchingSquares
         private VoxelGrid currentGrid;
         private JobHandle? currentJobHandle;
 
-        public static ChunkRenderer CreateNewInstance()
+        public static ChunkRenderer CreateNewInstance(Transform parent)
         {
             GameObject gameObject = new GameObject("Chunk Renderer");
             gameObject.hideFlags = HideFlags.DontSave;
+            gameObject.transform.SetParent(parent);
             return gameObject.AddComponent<ChunkRenderer>();
         }
 

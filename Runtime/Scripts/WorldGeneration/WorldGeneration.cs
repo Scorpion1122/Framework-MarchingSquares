@@ -27,7 +27,8 @@ namespace Thijs.Framework.MarchingSquares
                 float x = i * grid.VoxelSize;
                 float noise = Mathf.PerlinNoise(x * random * noiseScale, 0f);
                 float y = Mathf.Lerp(heightRange.x, heightRange.y, noise);
-                SetHeight(grid, chunk, fillType, i, y);
+                //SetHeight(grid, chunk, fillType, i, y);
+                SetHeight(grid, chunk, fillType, i, heightRange.y);
             }
         }
 

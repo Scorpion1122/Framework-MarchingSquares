@@ -19,10 +19,11 @@ namespace Thijs.Framework.MarchingSquares
 
         private List<EdgeCollider2D> colliders;
 
-        public static ChunkCollider CreateNewInstance()
+        public static ChunkCollider CreateNewInstance(Transform parent)
         {
             GameObject gameObject = new GameObject("Chunk Collider");
             gameObject.hideFlags = HideFlags.DontSave;
+            gameObject.transform.SetParent(parent);
             return gameObject.AddComponent<ChunkCollider>();
         }
 
