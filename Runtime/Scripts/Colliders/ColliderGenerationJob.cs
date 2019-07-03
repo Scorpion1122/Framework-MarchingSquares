@@ -70,12 +70,13 @@ public struct ColliderGenerationJob : IJob
             resolution);
         
         processed.Add(startIndex);
+        AddFirstVertex(startIndex, fillType, voxelType);
         MoveToNextVoxelCW(startIndex, fillType, voxelType);
 
         if (currentLength != 0)
         {
-            this.lengths.Add(currentLength);
-            this.colliderFillTypes.Add(fillType);
+            lengths.Add(currentLength);
+            colliderFillTypes.Add(fillType);
         }
     }
 
@@ -83,7 +84,7 @@ public struct ColliderGenerationJob : IJob
     {
         if (index == startIndex)
         {
-            AddVertex(startPosition);
+            //AddVertex(startPosition);
             return;
         }
 
@@ -211,14 +212,107 @@ public struct ColliderGenerationJob : IJob
         
         int2 newPosition = VoxelUtility.IndexToIndex2(index, resolution) + directionToNextVoxel;
         if (newPosition.x < 0 
-            || newPosition.x > resolution
+            || newPosition.x >= (resolution - 1)
             || newPosition.y < 0
-            || newPosition.y > resolution)
+            || newPosition.y >= (resolution - 1))
             return;
 
         MoveToNextVoxel(VoxelUtility.Index2ToIndex(newPosition, resolution), fillType);
     }
 
+    private void AddFirstVertex(int index, FillType fillType, int voxelType)
+    {
+        int topIndex = index + resolution;
+        int topRightIndex = index + resolution + 1;
+        int rightIndex = index + 1;
+        
+        float2 curPosition = VoxelUtility.IndexToPosition(index, resolution, size);
+        float2 topPosition = VoxelUtility.IndexToPosition(topIndex, resolution, size);
+        float2 topRightPosition = VoxelUtility.IndexToPosition(topRightIndex, resolution, size);
+        float2 rightPosition = VoxelUtility.IndexToPosition(rightIndex, resolution, size);
+
+        float2 currentOffset = offsets[index];
+        float2 topOffset = VoxelUtility.GetNeightbourOffset(topIndex, offsets);
+        float2 rightOffset = VoxelUtility.GetNeightbourOffset(rightIndex, offsets);
+
+        switch (voxelType)
+        {
+            //None
+            case 0:
+                return;
+
+            //One Corner, Bottom Left
+            case 1:
+                AddVertex(curPosition + new float2(0, currentOffset.y));
+                break;
+            //One Corner, Top Left
+            case 2:
+                AddVertex(topPosition + new float2(topOffset.x, 0));
+                break;
+            //One Corner, Top Right
+            case 4:
+                AddVertex(rightPosition + new float2(0, rightOffset.y));
+                break;
+            //One Corner, Bottom Right
+            case 8:
+                AddVertex(curPosition + new float2(currentOffset.x, 0));
+                break;
+
+            //Two Corners, Left
+            case 3:
+                AddVertex(topPosition + new float2(topOffset.x, 0));
+                break;
+            //Two Corners, Top
+            case 6:
+                AddVertex(rightPosition + new float2(0, rightOffset.y));
+                break;
+            //Two Corners, Right
+            case 12:
+                AddVertex(curPosition + new float2(currentOffset.x, 0));
+                break;
+            //Two Corners, Bottom
+            case 9:
+                AddVertex(curPosition + new float2(0, currentOffset.y));
+                break;
+
+            //Opposite Corners
+            /*case 5:
+                AddCrossCornerPolygon(
+                    fillType,
+                    curPosition,
+                    curPosition + new float2(0, currentOffset.y),
+                    curPosition + new float2(currentOffset.x, 0),
+                    topRightPosition,
+                    rightPosition + new float2(0, rightOffset.y),
+                    topPosition + new float2(topOffset.x, 0));
+                break;
+            case 10:
+                AddCrossCornerPolygon(
+                    fillType,
+                    topPosition,
+                    topPosition + new float2(topOffset.x, 0),
+                    curPosition + new float2(0, currentOffset.y),
+                    rightPosition,
+                    curPosition + new float2(currentOffset.x, 0),
+                    rightPosition + new float2(0, rightOffset.y));
+                break;*/
+
+            //Three Corners
+            case 7:
+                AddVertex(rightPosition + new float2(0, rightOffset.y));
+                break;
+            case 14:
+                AddVertex(curPosition + new float2(currentOffset.x, 0));
+                break;
+            case 13:
+                AddVertex(curPosition + new float2(0, currentOffset.y));
+                break;
+            case 11:
+                AddVertex(topPosition + new float2(topOffset.x, 0));
+                break;
+        }
+    }
+    
     private int FindStartIndex(int index, FillType fillType)
     {
         int voxelType = VoxelUtility.GetVoxelShape(
@@ -315,9 +409,9 @@ public struct ColliderGenerationJob : IJob
         
         int2 newPosition = VoxelUtility.IndexToIndex2(index, resolution) + directionToNextVoxel;
         if (newPosition.x < 0 
-            || newPosition.x > resolution
+            || newPosition.x >= (resolution - 1)
             || newPosition.y < 0
-            || newPosition.y > resolution)
+            || newPosition.y >= (resolution - 1))
             return index;
 
         int nextIndex = VoxelUtility.Index2ToIndex(newPosition, resolution);
