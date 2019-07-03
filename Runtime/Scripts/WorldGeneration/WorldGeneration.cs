@@ -24,7 +24,7 @@ namespace Thijs.Framework.MarchingSquares
 
             for (int i = 0; i < grid.ChunkResolution; i++)
             {
-                float x = i * grid.VoxelSize;
+                float x = i * grid.VoxelSize + chunk.origin.x;
                 float noise = Mathf.PerlinNoise(x * random * noiseScale, 0f);
                 float y = Mathf.Lerp(heightRange.x, heightRange.y, noise);
                 //SetHeight(grid, chunk, fillType, i, y);
@@ -38,7 +38,7 @@ namespace Thijs.Framework.MarchingSquares
             {
                 int2 index2 = new int2(x, i);
                 int index = VoxelUtility.Index2ToIndex(index2, grid.ChunkResolution);
-                float2 position = VoxelUtility.IndexToPosition(index, grid.ChunkResolution, grid.VoxelSize);
+                float2 position = VoxelUtility.IndexToPosition(index, grid.ChunkResolution, grid.VoxelSize) + chunk.origin;
 
                 if (position.y > height)
                     return;
