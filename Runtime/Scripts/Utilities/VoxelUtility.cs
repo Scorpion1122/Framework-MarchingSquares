@@ -1,118 +1,123 @@
 ﻿using Unity.Collections;
 using Unity.Mathematics;
 
+namespace Thijs.Framework.MarchingSquares
+{
 // (0,0) is left bottom, (max,max) is right top
 //
-public static class VoxelUtility
-{
-    public const int NATIVE_CACHE_SIZE = 16384;
-
-        public static float2 IndexToPosition(int index, int resolution, float size)
+        public static class VoxelUtility
         {
-                float x = math.floor(index % resolution) * size;
-                float y = math.floor((index - x) / resolution) * size;
-                return new float2(x, y);
-        }
+                public const int NATIVE_CACHE_SIZE = 16384;
 
-        public static int2 IndexToIndex2(int index, int resolution)
-        {
-                int x = (int)math.floor(index % resolution);
-                int y = (int)math.floor((index - x) / resolution);
-                return new int2(x, y);
-        }
+                public static float2 IndexToPosition(int index, int resolution, float size)
+                {
+                        float x = math.floor(index % resolution) * size;
+                        float y = math.floor((index - x) / resolution) * size;
+                        return new float2(x, y);
+                }
 
-        public static int Index2ToIndex(int2 index, int resolution)
-        {
-                return index.x + index.y * resolution;
-        }
+                public static int2 IndexToIndex2(int index, int resolution)
+                {
+                        int x = (int) math.floor(index % resolution);
+                        int y = (int) math.floor((index - x) / resolution);
+                        return new int2(x, y);
+                }
 
-        //Neighbour chunk voxels are duplicate voxels that share data with the neighbouring chunk
-        //This is only on the top and left side of the chunk
-        public static bool IsNeighbourChunkVoxel(int index, int resolution)
-        {
-            int2 index2 = IndexToIndex2(index, resolution);
-            return index2.x == resolution - 1 || index2.y == resolution - 1;
-        }
+                public static int Index2ToIndex(int2 index, int resolution)
+                {
+                        return index.x + index.y * resolution;
+                }
 
-        //None
-        //0:  FillType.None, FillType.None, FillType.None, FillType.None
+                //Neighbour chunk voxels are duplicate voxels that share data with the neighbouring chunk
+                //This is only on the top and left side of the chunk
+                public static bool IsNeighbourChunkVoxel(int index, int resolution)
+                {
+                        int2 index2 = IndexToIndex2(index, resolution);
+                        return index2.x == resolution - 1 || index2.y == resolution - 1;
+                }
 
-        //One Corner
-        //1:  FillType.TypeOne, FillType.None, FillType.None, FillType.None
-        //2:  FillType.None, FillType.TypeOne, FillType.None, FillType.None
-        //4:  FillType.None, FillType.None, FillType.TypeOne, FillType.None
-        //8:  FillType.None, FillType.None, FillType.None, FillType.TypeOne
+                //None
+                //0:  FillType.None, FillType.None, FillType.None, FillType.None
 
-        //Two Corners
-        //3:  FillType.TypeOne, FillType.TypeOne, FillType.None, FillType.None
-        //6:  FillType.None, FillType.TypeOne, FillType.TypeOne, FillType.None
-        //12: FillType.None, FillType.None, FillType.TypeOne, FillType.TypeOne
-        //9:  FillType.TypeOne, FillType.None, FillType.None, FillType.TypeOne
+                //One Corner
+                //1:  FillType.TypeOne, FillType.None, FillType.None, FillType.None
+                //2:  FillType.None, FillType.TypeOne, FillType.None, FillType.None
+                //4:  FillType.None, FillType.None, FillType.TypeOne, FillType.None
+                //8:  FillType.None, FillType.None, FillType.None, FillType.TypeOne
 
-        //Opposite Corners
-        //5:  FillType.TypeOne, FillType.None, FillType.TypeOne, FillType.None
-        //10: FillType.None, FillType.TypeOne, FillType.None, FillType.TypeOne
+                //Two Corners
+                //3:  FillType.TypeOne, FillType.TypeOne, FillType.None, FillType.None
+                //6:  FillType.None, FillType.TypeOne, FillType.TypeOne, FillType.None
+                //12: FillType.None, FillType.None, FillType.TypeOne, FillType.TypeOne
+                //9:  FillType.TypeOne, FillType.None, FillType.None, FillType.TypeOne
 
-        //Three Corners
-        //7:  FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.None
-        //14: FillType.None, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne
-        //13: FillType.TypeOne, FillType.None, FillType.TypeOne, FillType.TypeOne
-        //11: FillType.TypeOne, FillType.TypeOne, FillType.None, FillType.TypeOne
+                //Opposite Corners
+                //5:  FillType.TypeOne, FillType.None, FillType.TypeOne, FillType.None
+                //10: FillType.None, FillType.TypeOne, FillType.None, FillType.TypeOne
 
-        //All Corners
-        //15:  FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne
-        public static short GetVoxelShape(
-                FillType compareType, FillType bottomLeft, FillType topLeft, FillType topRight, FillType bottomRight)
-        {
-                short result = 0;
-                if (compareType == bottomLeft)
-                        result |= 1;
-                if (compareType == topLeft)
-                        result |= 2;
-                if (compareType == topRight)
-                        result |= 4;
-                if (compareType == bottomRight)
-                        result |= 8;
-                return result;
-        }
+                //Three Corners
+                //7:  FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.None
+                //14: FillType.None, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne
+                //13: FillType.TypeOne, FillType.None, FillType.TypeOne, FillType.TypeOne
+                //11: FillType.TypeOne, FillType.TypeOne, FillType.None, FillType.TypeOne
 
-        public static short GetVoxelShape(int index, FillType fillType, NativeArray<FillType> fillTypes, int resolution)
-        {
-                int topIndex = index + resolution;
-                int topRightIndex = index + resolution + 1;
-                int rightIndex = index + 1;
+                //All Corners
+                //15:  FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne, FillType.TypeOne
+                public static short GetVoxelShape(
+                        FillType compareType, FillType bottomLeft, FillType topLeft, FillType topRight,
+                        FillType bottomRight)
+                {
+                        short result = 0;
+                        if (compareType == bottomLeft)
+                                result |= 1;
+                        if (compareType == topLeft)
+                                result |= 2;
+                        if (compareType == topRight)
+                                result |= 4;
+                        if (compareType == bottomRight)
+                                result |= 8;
+                        return result;
+                }
 
-                FillType currentFill = fillTypes[index];
-                FillType topFill = GetNeightbourFillType(topIndex, fillTypes);
-                FillType topRightFill = GetNeightbourFillType(topRightIndex, fillTypes);
-                FillType rightFill = GetNeightbourFillType(rightIndex, fillTypes);
+                public static short GetVoxelShape(int index, FillType fillType, NativeArray<FillType> fillTypes,
+                        int resolution)
+                {
+                        int topIndex = index + resolution;
+                        int topRightIndex = index + resolution + 1;
+                        int rightIndex = index + 1;
 
-                return GetVoxelShape(
-                        fillType,
-                        currentFill,
-                        topFill,
-                        topRightFill,
-                        rightFill);
-        }
+                        FillType currentFill = fillTypes[index];
+                        FillType topFill = GetNeightbourFillType(topIndex, fillTypes);
+                        FillType topRightFill = GetNeightbourFillType(topRightIndex, fillTypes);
+                        FillType rightFill = GetNeightbourFillType(rightIndex, fillTypes);
 
-        private static FillType GetNeightbourFillType(int index, NativeArray<FillType> fillTypes)
-        {
-                if (index >= fillTypes.Length)
-                        return FillType.None;
-                return fillTypes[index];
-        }
+                        return GetVoxelShape(
+                                fillType,
+                                currentFill,
+                                topFill,
+                                topRightFill,
+                                rightFill);
+                }
 
-        public static FillType GetNeightbour(NativeArray<FillType> fillTypes, int index)
-        {
-                if (index >= fillTypes.Length)
-                    return FillType.None;
-                return fillTypes[index];
-        }
+                private static FillType GetNeightbourFillType(int index, NativeArray<FillType> fillTypes)
+                {
+                        if (index >= fillTypes.Length)
+                                return FillType.None;
+                        return fillTypes[index];
+                }
 
-        public static float2 GetNeightbourOffset(int index, NativeArray<float2> offsets)
-        {
-                if (index >= offsets.Length)
-                        return float2.zero;
-                return offsets[index];
+                public static FillType GetNeightbour(NativeArray<FillType> fillTypes, int index)
+                {
+                        if (index >= fillTypes.Length)
+                                return FillType.None;
+                        return fillTypes[index];
+                }
+
+                public static float2 GetNeightbourOffset(int index, NativeArray<float2> offsets)
+                {
+                        if (index >= offsets.Length)
+                                return float2.zero;
+                        return offsets[index];
+                }
         }
 }

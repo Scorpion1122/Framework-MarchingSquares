@@ -1,8 +1,11 @@
 using Unity.Jobs;
 
-public interface IChunkJobDependency
+namespace Thijs.Framework.MarchingSquares
 {
-    JobHandle ScheduleChunkJob(VoxelGrid grid, ChunkData chunkData, JobHandle dependency);
+    public interface IChunkJobDependency
+    {
+        JobHandle ScheduleChunkJob(VoxelGrid grid, ChunkData chunkData, JobHandle dependency);
 
-    void OnJobCompleted();
+        void OnJobCompleted();
+    }
 }

@@ -1,14 +1,17 @@
 using Unity.Collections;
 
-public static class NativeArrayExtensions
+namespace Thijs.Framework.MarchingSquares
 {
-    public static T[] ToArray<T>(this NativeList<T> array, int from, int length) where T : struct
+    public static class NativeArrayExtensions
     {
-        T[] result = new T[length];
+        public static T[] ToArray<T>(this NativeList<T> array, int from, int length) where T : struct
+        {
+            T[] result = new T[length];
 
-        for (int i = 0; i < length; i++)
-            result[i] = array[i + from];
+            for (int i = 0; i < length; i++)
+                result[i] = array[i + from];
 
-        return result;
+            return result;
+        }
     }
 }

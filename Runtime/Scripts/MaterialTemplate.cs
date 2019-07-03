@@ -1,27 +1,30 @@
 ﻿using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Material Template", menuName = "Database/Voxel/Material Template")]
-public class MaterialTemplate : ScriptableObject
+namespace Thijs.Framework.MarchingSquares
 {
-    public Material typeOneMaterial;
-    public Material typeTwoMaterial;
-
-    public Material GetMaterial(FillType fillType)
+    [CreateAssetMenu(fileName = "Material Template", menuName = "Database/Voxel/Material Template")]
+    public class MaterialTemplate : ScriptableObject
     {
-        switch (fillType)
+        public Material typeOneMaterial;
+        public Material typeTwoMaterial;
+
+        public Material GetMaterial(FillType fillType)
         {
-            case FillType.TypeOne:
-                return typeOneMaterial;
-            case FillType.TypeTwo:
-                return typeTwoMaterial;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(fillType), fillType, null);
+            switch (fillType)
+            {
+                case FillType.TypeOne:
+                    return typeOneMaterial;
+                case FillType.TypeTwo:
+                    return typeTwoMaterial;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(fillType), fillType, null);
+            }
         }
-    }
 
-    public PhysicsMaterial2D GetPhysicsMaterial(FillType fillType)
-    {
-        return null;
+        public PhysicsMaterial2D GetPhysicsMaterial(FillType fillType)
+        {
+            return null;
+        }
     }
 }

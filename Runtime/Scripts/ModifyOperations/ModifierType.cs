@@ -1,5 +1,8 @@
-﻿public enum ModifierType
+﻿namespace Thijs.Framework.MarchingSquares
 {
-    Circle,
-    Square,
+    public enum ModifierType
+    {
+        Circle,
+        Square,
+    }
 }

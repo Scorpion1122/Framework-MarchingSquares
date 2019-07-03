@@ -1,8 +1,11 @@
 ﻿using Unity.Mathematics;
 
-public struct Triangle
+namespace Thijs.Framework.MarchingSquares
 {
-        public float2 one;
-        public float2 two;
-        public float2 three;
+        public struct Triangle
+        {
+                public float2 one;
+                public float2 two;
+                public float2 three;
+        }
 }

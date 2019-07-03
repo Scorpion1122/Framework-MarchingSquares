@@ -1,8 +1,11 @@
-﻿public enum PolygonType
+﻿namespace Thijs.Framework.MarchingSquares
 {
-    OneCorner,
-    TwoCorners,
-    CrossCorners,
-    ThreeCorners,
-    AllCorners,
+    public enum PolygonType
+    {
+        OneCorner,
+        TwoCorners,
+        CrossCorners,
+        ThreeCorners,
+        AllCorners,
+    }
 }

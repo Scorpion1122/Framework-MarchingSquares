@@ -3,98 +3,101 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(VoxelGrid))]
-public class VoxelGridEditor : Editor
+namespace Thijs.Framework.MarchingSquares
 {
-    private ModifierType modifierType = ModifierType.Circle;
-    private FillType fillType = FillType.TypeOne;
-    private float modifierSize = 0.5f;
-
-    private bool didPress;
-
-    private VoxelGrid voxelGrid;
-
-    private void OnEnable()
+    [CustomEditor(typeof(VoxelGrid))]
+    public class VoxelGridEditor : Editor
     {
-        voxelGrid = (VoxelGrid) target;
-        Tools.hidden = true;
-    }
+        private ModifierType modifierType = ModifierType.Circle;
+        private FillType fillType = FillType.TypeOne;
+        private float modifierSize = 0.5f;
 
-    private void OnDisable()
-    {
-        Tools.hidden = false;
-    }
+        private bool didPress;
 
-    public override void OnInspectorGUI()
-    {
-        GUILayout.BeginVertical("box");
+        private VoxelGrid voxelGrid;
+
+        private void OnEnable()
         {
-            modifierType = (ModifierType)EditorGUILayout.EnumPopup("Brush", modifierType);
-            fillType = (FillType)EditorGUILayout.EnumPopup("Type", fillType);
-            modifierSize = EditorGUILayout.FloatField("Size", modifierSize);
-        }
-        GUILayout.EndVertical();
-        
-        base.OnInspectorGUI();
-    }
-
-    private void OnSceneGUI()
-    {
-        Vector3 handlePosition;
-        if (!GetMousePositionOnGrid(out handlePosition))
-            return;
-
-        if (modifierType == ModifierType.Circle)
-        {
-            Handles.DrawWireDisc(handlePosition, voxelGrid.transform.forward, modifierSize);
-        }
-        else if (modifierType == ModifierType.Square)
-        {
-            Handles.DrawWireCube(handlePosition, new Vector3(modifierSize, modifierSize, 0f) * 2f);
+            voxelGrid = (VoxelGrid) target;
+            Tools.hidden = true;
         }
 
-        if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+        private void OnDisable()
         {
-            didPress = true;
+            Tools.hidden = false;
         }
 
-        if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
+        public override void OnInspectorGUI()
         {
-            didPress = false;
-        }
-
-        if (didPress && Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout)
-        {
-            Vector3 localPosition = voxelGrid.transform.InverseTransformPoint(handlePosition);
-            GridModification modification = new GridModification()
+            GUILayout.BeginVertical("box");
             {
-                modifierType = modifierType,
-                position = new float2(localPosition.x, localPosition.y),
-                setFilltype = fillType,
-                size = modifierSize,
-            };
-            voxelGrid.ModifyGrid(modification);
-            Event.current.Use();
+                modifierType = (ModifierType) EditorGUILayout.EnumPopup("Brush", modifierType);
+                fillType = (FillType) EditorGUILayout.EnumPopup("Type", fillType);
+                modifierSize = EditorGUILayout.FloatField("Size", modifierSize);
+            }
+            GUILayout.EndVertical();
+
+            base.OnInspectorGUI();
         }
-        
-        HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-        if(Event.current.type == EventType.MouseMove) 
-            SceneView.RepaintAll();
-    }
 
-    private bool GetMousePositionOnGrid(out Vector3 position)
-    {
-        Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-        Plane plane = new Plane(voxelGrid.transform.forward, voxelGrid.transform.position);
-
-        float distnance;
-        if (plane.Raycast(ray, out distnance))
+        private void OnSceneGUI()
         {
-            position = ray.origin + ray.direction.normalized * distnance;
-            return true;
+            Vector3 handlePosition;
+            if (!GetMousePositionOnGrid(out handlePosition))
+                return;
+
+            if (modifierType == ModifierType.Circle)
+            {
+                Handles.DrawWireDisc(handlePosition, voxelGrid.transform.forward, modifierSize);
+            }
+            else if (modifierType == ModifierType.Square)
+            {
+                Handles.DrawWireCube(handlePosition, new Vector3(modifierSize, modifierSize, 0f) * 2f);
+            }
+
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+            {
+                didPress = true;
+            }
+
+            if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
+            {
+                didPress = false;
+            }
+
+            if (didPress && Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout)
+            {
+                Vector3 localPosition = voxelGrid.transform.InverseTransformPoint(handlePosition);
+                GridModification modification = new GridModification()
+                {
+                    modifierType = modifierType,
+                    position = new float2(localPosition.x, localPosition.y),
+                    setFilltype = fillType,
+                    size = modifierSize,
+                };
+                voxelGrid.ModifyGrid(modification);
+                Event.current.Use();
+            }
+
+            HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+            if (Event.current.type == EventType.MouseMove)
+                SceneView.RepaintAll();
         }
 
-        position = Vector3.zero;
-        return false;
+        private bool GetMousePositionOnGrid(out Vector3 position)
+        {
+            Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+            Plane plane = new Plane(voxelGrid.transform.forward, voxelGrid.transform.position);
+
+            float distnance;
+            if (plane.Raycast(ray, out distnance))
+            {
+                position = ray.origin + ray.direction.normalized * distnance;
+                return true;
+            }
+
+            position = Vector3.zero;
+            return false;
+        }
     }
 }
