@@ -6,8 +6,8 @@ namespace Thijs.Framework.MarchingSquares
     [CreateAssetMenu(fileName = "Material Template", menuName = "Database/Voxel/Material Template")]
     public class MaterialTemplate : ScriptableObject
     {
-        public Material typeOneMaterial;
-        public Material typeTwoMaterial;
+        [SerializeField] private Material typeOneMaterial;
+        [SerializeField] private Material typeTwoMaterial;
 
         public Material GetMaterial(FillType fillType)
         {

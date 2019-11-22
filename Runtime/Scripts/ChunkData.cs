@@ -16,6 +16,7 @@ namespace Thijs.Framework.MarchingSquares
         //Voxel Data
         public NativeArray<FillType> fillTypes;
         public NativeArray<float2> offsets;
+        public NativeArray<float> depth;
 
         //Modifiers
         public NativeList<GridModification> modifiers;
@@ -32,6 +33,7 @@ namespace Thijs.Framework.MarchingSquares
             //Voxel Data
             fillTypes = new NativeArray<FillType>(resolution * resolution, Allocator.Persistent);
             offsets = new NativeArray<float2>(resolution * resolution, Allocator.Persistent);
+            depth = new NativeArray<float>(resolution * resolution, Allocator.Persistent);
 
             //Modifiers
             modifiers = new NativeList<GridModification>(100, Allocator.Persistent);
@@ -44,6 +46,7 @@ namespace Thijs.Framework.MarchingSquares
             fillTypes.Dispose();
             offsets.Dispose();
             modifiers.Dispose();
+            depth.Dispose();
         }
 
         public Rect GetBounds()

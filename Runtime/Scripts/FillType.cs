@@ -1,5 +1,8 @@
-﻿namespace Thijs.Framework.MarchingSquares
+﻿using System;
+
+namespace Thijs.Framework.MarchingSquares
 {
+    [Flags]
     public enum FillType
     {
         None = 0,

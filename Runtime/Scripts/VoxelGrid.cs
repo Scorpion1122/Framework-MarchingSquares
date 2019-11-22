@@ -60,10 +60,10 @@ namespace Thijs.Framework.MarchingSquares
             {
                 float2 origin = ChunkUtility.GetChunkOrigin(i, gridResolution, chunkSize);
                 chunks[i] = new ChunkData(origin, chunkSize, chunkResolution + 1);
-                
+
                 //Generate Data
-                worldGenerationTest.GenerateChunkData(this, chunks[i]);
-                dirtyChunks.Add(i);
+                //worldGenerationTest.GenerateChunkData(this, chunks[i]);
+                //dirtyChunks.Add(i);
 
                 renderers[i] = ChunkRenderer.CreateNewInstance(transform);
                 renderers[i].transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
@@ -130,6 +130,7 @@ namespace Thijs.Framework.MarchingSquares
         private void LateUpdate()
         {
             ScheduleModifyChunkJobs();
+            CompleteModifyChunkJobs();
         }
 
         private void ScheduleModifyChunkJobs()
@@ -150,12 +151,14 @@ namespace Thijs.Framework.MarchingSquares
             dirtyChunks.Clear();
 
             JobHandle.ScheduleBatchedJobs();
+        }
 
+        private void CompleteModifyChunkJobs()
+        {
             foreach (ChunkData chunkData in activeJobHandles)
             {
                 CompleteChunkJobs(chunkData);
             }
-
             activeJobHandles.Clear();
         }
 
