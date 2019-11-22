@@ -21,6 +21,9 @@ namespace Thijs.Framework.MarchingSquares
         // current ---- right
         public void Execute(int index)
         {
+            if (index % resolution == resolution - 1)
+                return;
+
             for (int i = 0; i < generateForFillTypes.Length; i++)
             {
                 Execute(index, generateForFillTypes[i]);
