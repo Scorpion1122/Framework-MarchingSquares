@@ -16,6 +16,7 @@ namespace Thijs.Framework.MarchingSquares
         //New
         private NativeList<float2> jobVertices;
         private List<Vector3> vertexCache;
+        private List<int> triangleCache;
         
         private NativeList<int> triangleIndices;
         private NativeList<int> triangleLengths;
@@ -36,6 +37,7 @@ namespace Thijs.Framework.MarchingSquares
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
             meshFilter = gameObject.AddComponent<MeshFilter>();
             vertexCache = new List<Vector3>();
+            triangleCache = new List<int>();
         }
 
         private void OnEnable()
@@ -116,9 +118,11 @@ namespace Thijs.Framework.MarchingSquares
                 int length = triangleLengths[i];
                 if (length != 0)
                 {
-                    int[] triangles = triangleIndices.ToArray(offset, length);
-                    meshFilter.sharedMesh.SetTriangles(triangles, currentSubMesh);
-                    materials[currentSubMesh] = currentGrid.MaterialTemplate.GetMaterial((FillType) (i + 1));
+                    WriteJobTrianglesToTriangleCache(offset, length);
+                    meshFilter.sharedMesh.SetTriangles(triangleCache, currentSubMesh);
+                    
+                    if (currentGrid.MaterialTemplate != null)
+                        materials[currentSubMesh] = currentGrid.MaterialTemplate.GetMaterial((FillType) (i + 1));
                     currentSubMesh++;
                 }
 
@@ -135,6 +139,15 @@ namespace Thijs.Framework.MarchingSquares
             {
                 float2 jobVertex = jobVertices[i];
                 vertexCache.Add(new Vector3(jobVertex.x, jobVertex.y));
+            }
+        }
+
+        private void WriteJobTrianglesToTriangleCache(int offset, int length)
+        {
+            triangleCache.Clear();
+            for (int i = offset; i < offset + length; i++)
+            {
+                triangleCache.Add(triangleIndices[i]);
             }
         }
 

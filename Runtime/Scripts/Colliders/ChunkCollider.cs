@@ -96,7 +96,9 @@ namespace Thijs.Framework.MarchingSquares
                 FillType fillType = types[i];
 
                 EdgeCollider2D collider = colliders[i];
-                collider.sharedMaterial = currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
+                
+                if (currentGrid.MaterialTemplate != null)
+                    collider.sharedMaterial = currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
 
                 Vector2[] points = new Vector2[length];
                 for (int j = 0; j < length; j++)

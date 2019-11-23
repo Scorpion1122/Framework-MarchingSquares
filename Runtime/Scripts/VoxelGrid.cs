@@ -62,8 +62,11 @@ namespace Thijs.Framework.MarchingSquares
                 chunks[i] = new ChunkData(origin, chunkSize, chunkResolution + 1);
 
                 //Generate Data
-                worldGenerationTest.GenerateChunkData(this, chunks[i]);
-                dirtyChunks.Add(i);
+                if (worldGenerationTest != null)
+                {
+                    worldGenerationTest.GenerateChunkData(this, chunks[i]);
+                    dirtyChunks.Add(i);
+                }
 
                 renderers[i] = ChunkRenderer.CreateNewInstance(transform);
                 renderers[i].transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
@@ -129,8 +132,10 @@ namespace Thijs.Framework.MarchingSquares
 
         private void LateUpdate()
         {
+            Profiler.BeginSample("Voxel Grid - Late Update");
             ScheduleModifyChunkJobs();
             CompleteModifyChunkJobs();
+            Profiler.EndSample();
         }
 
         private void ScheduleModifyChunkJobs()

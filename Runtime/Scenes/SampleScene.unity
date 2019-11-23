@@ -762,12 +762,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd8d1d8d42c40bf45bc5fd399b2782d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridResolution: 1
+  gridResolution: 2
   chunkResolution: 32
   voxelSize: 0.5
   materialTemplate: {fileID: 11400000, guid: 5bdcbec4e881c6d4f8e48be8325dce84, type: 2}
   worldGenerationTest: {fileID: 1987310622}
-  drawGizmos: 1
+  drawGizmos: 0
 --- !u!4 &1987310621
 Transform:
   m_ObjectHideFlags: 0
