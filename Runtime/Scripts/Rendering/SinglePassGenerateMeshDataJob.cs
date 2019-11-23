@@ -1,36 +1,44 @@
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace Thijs.Framework.MarchingSquares
 {
+    [BurstCompile]
     public struct VertexCache : IDisposable
     {
+        /// <summary>
+        /// * - * - * nextRow
+        /// * - - - * midRow
+        /// o - * - * prevRow
+        /// o is source of square
+        /// </summary>
         public NativeArray<int> prevRow;
         public NativeArray<int> midRow;
-        public NativeArray<int> curRow;
+        public NativeArray<int> nextRow;
 
         public VertexCache(int resolution)
         {
             // prev and cur also needs to store the vertex between voxels, thats wy resolution * 2
             prevRow = new NativeArray<int>(resolution * 2, Allocator.Temp);
             midRow = new NativeArray<int>(resolution, Allocator.Temp);
-            curRow = new NativeArray<int>(resolution * 2, Allocator.Temp);
+            nextRow = new NativeArray<int>(resolution * 2, Allocator.Temp);
         }
 
         public void Swap()
         {
             NativeArray<int> temp = prevRow;
-            prevRow = curRow;
-            curRow = temp;
+            prevRow = nextRow;
+            nextRow = temp;
         }
 
         public void Dispose()
         {
             prevRow.Dispose();
             midRow.Dispose();
-            curRow.Dispose();
+            nextRow.Dispose();
         }
     }
 
@@ -50,9 +58,14 @@ namespace Thijs.Framework.MarchingSquares
         {
             VertexCache cache = new VertexCache(resolution);
 
+            int previousLength = 0;
             for (int i = 0; i < generateForFillTypes.Length; i++)
             {
                 Execute(generateForFillTypes[i], cache);
+                
+                int length = triangleIndices.Length - previousLength;
+                triangleLengths.Add(length);
+                previousLength = length;
             }
             cache.Dispose();
         }
@@ -65,7 +78,7 @@ namespace Thijs.Framework.MarchingSquares
                 if (i % resolution == resolution - 1)
                 {
                     cache.Swap();
-                    return;
+                    continue;
                 }
 
                 Execute(i, fillType, cache);
@@ -102,11 +115,11 @@ namespace Thijs.Framework.MarchingSquares
             float2 topOffset = GetNeightbourOffset(topIndex);
             float2 rightOffset = GetNeightbourOffset(rightIndex);
 
-            bool first = index % resolution == 0 || index < resolution;
+            bool firstRow = index < resolution;
+            bool firstColumn = index % resolution == 0;
             int curCacheI = (index % resolution) * 2;
             int midCacheI = index % resolution;
 
-            int v1, v2, v3, v4, v5, v6;
             switch (voxelType)
             {
                 //None
@@ -115,155 +128,295 @@ namespace Thijs.Framework.MarchingSquares
 
                 //One Corner
                 case 1:
-                    if (first)
+                    if (firstRow && firstColumn)
                     {
                         vertices.Add(curPosition);
-                        vertices.Add(curPosition + new float2(0, currentOffset.y));
-                        vertices.Add(curPosition + new float2(currentOffset.x, 0));
-
-                        v1 = vertices.Length - 3;
-                        v2 = vertices.Length - 2;
-                        v3 = vertices.Length - 1;
+                        cache.prevRow[curCacheI] = vertices.Length - 1; //v1
                     }
-                    else
+                    if (firstColumn)
                     {
-                        v1 = cache.prevRow[curCacheI];
-                        v2 = cache.midRow[midCacheI];
-                        v3 = cache.prevRow[curCacheI + 1];
+                        vertices.Add(curPosition + new float2(0, currentOffset.y));
+                        cache.midRow[midCacheI] = vertices.Length - 1; //v2
+                    }
+                    if (firstRow)
+                    {
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0));
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1; //v3
                     }
 
-                    AddOneCornerPolygon(v1, v2, v3);
-
-                    cache.curRow[curCacheI] = v1;
-                    cache.midRow[midCacheI] = v2;
-                    cache.curRow[curCacheI + 1] = v3;
+                    AddTriangle(
+                        cache.prevRow[curCacheI], 
+                        cache.midRow[midCacheI], 
+                        cache.prevRow[curCacheI + 1]);
                     break;
                 case 2:
-                    AddOneCornerPolygon(
-                        fillType,
-                        topPosition,
-                        topPosition + new float2(topOffset.x, 0),
-                        curPosition + new float2(0, currentOffset.y));
+                    vertices.Add(topPosition); //v1
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v2
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v3
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+                    
+                    AddTriangle(
+                        cache.nextRow[curCacheI], 
+                        cache.nextRow[curCacheI + 1], 
+                        cache.midRow[midCacheI]);
                     break;
                 case 4:
-                    AddOneCornerPolygon(
-                        fillType,
-                        topRightPosition,
-                        rightPosition + new float2(0, rightOffset.y),
-                        topPosition + new float2(topOffset.x, 0));
+                    vertices.Add(topRightPosition); //v1
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v2
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v3
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+                    
+                    AddTriangle(
+                        cache.nextRow[curCacheI + 2], 
+                        cache.midRow[midCacheI + 1], 
+                        cache.nextRow[curCacheI + 1]);
                     break;
                 case 8:
-                    AddOneCornerPolygon(
-                        fillType,
-                        rightPosition,
-                        curPosition + new float2(currentOffset.x, 0),
-                        rightPosition + new float2(0, rightOffset.y));
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v1
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v2
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v3
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+                    
+                    AddTriangle(
+                        cache.prevRow[curCacheI + 2], 
+                        cache.prevRow[curCacheI + 1], 
+                        cache.midRow[midCacheI + 1]);
                     break;
 
                 //Two Corners
                 case 3:
-                    AddTwoCornerPolygon(
-                        fillType,
-                        curPosition,
-                        topPosition,
-                        topPosition + new float2(topOffset.x, 0),
-                        curPosition + new float2(currentOffset.x, 0));
+                    if (firstRow)
+                    {
+                        vertices.Add(curPosition); //v1
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v4
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(topPosition); //v2
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v3
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+                    
+                    AddQuad(
+                        cache.prevRow[curCacheI],
+                        cache.nextRow[curCacheI],
+                        cache.nextRow[curCacheI + 1],
+                        cache.prevRow[curCacheI + 1]);
                     break;
                 case 6:
-                    AddTwoCornerPolygon(
-                        fillType,
-                        topPosition,
-                        topRightPosition,
-                        rightPosition + new float2(0, rightOffset.y),
-                        curPosition + new float2(0, currentOffset.y));
+                    vertices.Add(topPosition); //v1
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    vertices.Add(topRightPosition); //v2
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v3
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+                    
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v4
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+                    
+                    AddQuad(
+                        cache.nextRow[curCacheI],
+                        cache.nextRow[curCacheI + 2],
+                        cache.midRow[midCacheI + 1],
+                        cache.midRow[midCacheI]);
                     break;
                 case 12:
-                    AddTwoCornerPolygon(
-                        fillType,
-                        topRightPosition,
-                        rightPosition,
-                        curPosition + new float2(currentOffset.x, 0),
-                        topPosition + new float2(topOffset.x, 0));
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v1
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+                    
+                    vertices.Add(topRightPosition); //v2
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v3
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v4
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                    }
+                    
+                    AddQuad(
+                        cache.nextRow[curCacheI + 1],
+                        cache.nextRow[curCacheI + 2],
+                        cache.prevRow[curCacheI + 2],
+                        cache.prevRow[curCacheI + 1]);
                     break;
                 case 9:
-                    AddTwoCornerPolygon(
-                        fillType,
-                        rightPosition,
-                        curPosition,
-                        curPosition + new float2(0, currentOffset.y),
-                        rightPosition + new float2(0, rightOffset.y));
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v1
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                    }
+
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition); //v2
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v3
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v4
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+                    
+                    AddQuad(
+                        cache.prevRow[curCacheI + 2],
+                        cache.prevRow[curCacheI],
+                        cache.midRow[midCacheI],
+                        cache.midRow[midCacheI + 1]);
                     break;
 
-                //Opposite Corners
-                case 5:
-                    AddCrossCornerPolygon(
-                        fillType,
-                        curPosition,
-                        curPosition + new float2(0, currentOffset.y),
-                        curPosition + new float2(currentOffset.x, 0),
-                        topRightPosition,
-                        rightPosition + new float2(0, rightOffset.y),
-                        topPosition + new float2(topOffset.x, 0));
-                    break;
-                case 10:
-                    AddCrossCornerPolygon(
-                        fillType,
-                        topPosition,
-                        topPosition + new float2(topOffset.x, 0),
-                        curPosition + new float2(0, currentOffset.y),
-                        rightPosition,
-                        curPosition + new float2(currentOffset.x, 0),
-                        rightPosition + new float2(0, rightOffset.y));
-                    break;
-
-                //Three Corners
+//                //Opposite Corners
+//                case 5:
+//                    AddCrossCornerPolygon(
+//                        fillType,
+//                        curPosition,
+//                        curPosition + new float2(0, currentOffset.y),
+//                        curPosition + new float2(currentOffset.x, 0),
+//                        topRightPosition,
+//                        rightPosition + new float2(0, rightOffset.y),
+//                        topPosition + new float2(topOffset.x, 0));
+//                    break;
+//                case 10:
+//                    AddCrossCornerPolygon(
+//                        fillType,
+//                        topPosition,
+//                        topPosition + new float2(topOffset.x, 0),
+//                        curPosition + new float2(0, currentOffset.y),
+//                        rightPosition,
+//                        curPosition + new float2(currentOffset.x, 0),
+//                        rightPosition + new float2(0, rightOffset.y));
+//                    break;
+//
+//                //Three Corners
                 case 7:
-                    AddThreeCornersPolygon(
-                        fillType,
-                        topPosition,
-                        topRightPosition,
-                        rightPosition + new float2(0, rightOffset.y),
-                        curPosition + new float2(currentOffset.x, 0),
-                        curPosition);
-                    break;
-                case 14:
-                    AddThreeCornersPolygon(
-                        fillType,
-                        topRightPosition,
-                        rightPosition,
-                        curPosition + new float2(currentOffset.x, 0),
-                        curPosition + new float2(0, currentOffset.y),
-                        topPosition);
-                    break;
-                case 13:
-                    AddThreeCornersPolygon(
-                        fillType,
-                        rightPosition,
-                        curPosition,
-                        curPosition + new float2(0, currentOffset.y),
-                        topPosition + new float2(topOffset.x, 0),
-                        topRightPosition);
-                    break;
-                case 11:
-                    AddThreeCornersPolygon(
-                        fillType,
-                        curPosition,
-                        topPosition,
-                        topPosition + new float2(topOffset.x, 0),
-                        rightPosition + new float2(0, rightOffset.y),
-                        rightPosition);
-                    break;
+                    vertices.Add(topPosition); //v1
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    vertices.Add(topRightPosition); //v2
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v3
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
 
+                    if (firstRow)
+                    {
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v4
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition); //v5
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                    }
+                    
+                    AddPentagon(
+                        cache.nextRow[curCacheI],
+                        cache.nextRow[curCacheI + 2],
+                        cache.midRow[midCacheI + 1],
+                        cache.prevRow[curCacheI + 1],
+                        cache.prevRow[curCacheI]);
+                    break;
+//                case 14:
+//                    AddThreeCornersPolygon(
+//                        fillType,
+//                        topRightPosition,
+//                        rightPosition,
+//                        curPosition + new float2(currentOffset.x, 0),
+//                        curPosition + new float2(0, currentOffset.y),
+//                        topPosition);
+//                    break;
+//                case 13:
+//                    AddThreeCornersPolygon(
+//                        fillType,
+//                        rightPosition,
+//                        curPosition,
+//                        curPosition + new float2(0, currentOffset.y),
+//                        topPosition + new float2(topOffset.x, 0),
+//                        topRightPosition);
+//                    break;
+//                case 11:
+//                    AddThreeCornersPolygon(
+//                        fillType,
+//                        curPosition,
+//                        topPosition,
+//                        topPosition + new float2(topOffset.x, 0),
+//                        rightPosition + new float2(0, rightOffset.y),
+//                        rightPosition);
+//                    break;
+//
                 //All Corners
                 case 15:
-                    AddAllCornerPolygon(
-                        fillType,
-                        curPosition,
-                        topPosition,
-                        topRightPosition,
-                        rightPosition);
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition); //v1
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(topPosition); //v2
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    vertices.Add(topRightPosition); //v3
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v4
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                    }
+
+                    AddQuad(
+                        cache.prevRow[curCacheI],
+                        cache.nextRow[curCacheI],
+                        cache.nextRow[curCacheI + 2],
+                        cache.prevRow[curCacheI + 2]);
                     break;
             }
+        }
+
+        private void AddPentagon(int v1, int v2, int v3, int v4, int v5)
+        {
+            AddTriangle(v1, v2, v3);
+            AddTriangle(v1, v3, v4);
+            AddTriangle(v1, v4, v5);
+        }
+
+        private void AddQuad(int v1, int v2, int v3, int v4)
+        {
+            AddTriangle(v1, v2, v3);
+            AddTriangle(v1, v3, v4);
+        }
+
+        private void AddTriangle(int v1, int v2, int v3)
+        {
+            triangleIndices.Add(v1);
+            triangleIndices.Add(v2);
+            triangleIndices.Add(v3);
         }
 
         private FillType GetNeightbourFillType(int index)

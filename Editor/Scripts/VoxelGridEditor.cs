@@ -76,6 +76,7 @@ namespace Thijs.Framework.MarchingSquares
                     size = modifierSize,
                 };
                 voxelGrid.ModifyGrid(modification);
+                EditorApplication.QueuePlayerLoopUpdate();
                 Event.current.Use();
             }
 

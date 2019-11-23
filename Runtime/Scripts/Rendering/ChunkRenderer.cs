@@ -1,5 +1,7 @@
-﻿using Unity.Collections;
+﻿using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
@@ -11,8 +13,14 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private MeshFilter meshFilter;
         private Mesh sharedMesh;
 
+        //Old
         private NativeMultiHashMap<int, Polygon> polygons;
         private NativeList<Vector3> vertices;
+
+        //New
+        private NativeList<float2> jobVertices;
+        private List<Vector3> vertexCache;
+        
         private NativeList<int> triangleIndices;
         private NativeList<int> triangleLengths;
 
@@ -31,6 +39,7 @@ namespace Thijs.Framework.MarchingSquares
         {
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
             meshFilter = gameObject.AddComponent<MeshFilter>();
+            vertexCache = new List<Vector3>();
         }
 
         private void OnEnable()
@@ -40,6 +49,7 @@ namespace Thijs.Framework.MarchingSquares
 
             polygons = new NativeMultiHashMap<int, Polygon>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             vertices = new NativeList<Vector3>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
+            jobVertices = new NativeList<float2>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             triangleIndices = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             triangleLengths = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
         }
@@ -53,6 +63,7 @@ namespace Thijs.Framework.MarchingSquares
             {
                 polygons.Dispose();
                 vertices.Dispose();
+                jobVertices.Dispose();
                 triangleIndices.Dispose();
                 triangleLengths.Dispose();
             }
@@ -64,6 +75,7 @@ namespace Thijs.Framework.MarchingSquares
         {
             polygons.Clear();
             vertices.Clear();
+            jobVertices.Clear();
             triangleIndices.Clear();
             triangleLengths.Clear();
         }
@@ -73,6 +85,22 @@ namespace Thijs.Framework.MarchingSquares
             currentGrid = grid;
 
             ClearJobData();
+            SinglePassGenerateMeshDataJob singlePassMeshGenJob = new SinglePassGenerateMeshDataJob()
+            {
+                resolution = currentGrid.ChunkResolution,
+                size = currentGrid.VoxelSize,
+                generateForFillTypes = currentGrid.SupportedFillTypes,
+                
+                fillTypes = chunkData.fillTypes,
+                offsets = chunkData.offsets,
+                
+                vertices = jobVertices,
+                triangleIndices = triangleIndices,
+                triangleLengths = triangleLengths,
+            };
+            currentJobHandle = singlePassMeshGenJob.Schedule(dependency);
+            return currentJobHandle.Value;
+            
             GenerateVoxelPolygonsJob generateVoxelPolygonsJob = new GenerateVoxelPolygonsJob()
             {
                 resolution = currentGrid.ChunkResolution,
@@ -109,8 +137,11 @@ namespace Thijs.Framework.MarchingSquares
             int subMeshCount = GetSubMeshCount();
             Material[] materials = new Material[subMeshCount];
             sharedMesh.subMeshCount = subMeshCount;
-            sharedMesh.vertices = vertices.ToArray();
+            //sharedMesh.vertices = vertices.ToArray();
 
+            WriteJobVerticesToVertexCache();
+            sharedMesh.SetVertices(vertexCache);
+            
             int offset = 0;
             int currentSubMesh = 0;
             for (int i = 0; i < triangleLengths.Length; i++)
@@ -128,6 +159,16 @@ namespace Thijs.Framework.MarchingSquares
             }
 
             meshRenderer.sharedMaterials = materials;
+        }
+
+        private void WriteJobVerticesToVertexCache()
+        {
+            vertexCache.Clear();
+            for (int i = 0; i < jobVertices.Length; i++)
+            {
+                float2 jobVertex = jobVertices[i];
+                vertexCache.Add(new Vector3(jobVertex.x, jobVertex.y));
+            }
         }
 
         private int GetSubMeshCount()
