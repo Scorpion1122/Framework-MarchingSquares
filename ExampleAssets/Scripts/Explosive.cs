@@ -5,7 +5,6 @@ using UnityEngine;
 public class Explosive : MonoBehaviour
 {
     [SerializeField] private float radius = 1f;
-    [SerializeField] private float delay = 0f;
 
     [Header("Collision")]
     [SerializeField] private float collisionOffset = 0f;

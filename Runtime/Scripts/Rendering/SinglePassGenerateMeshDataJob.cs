@@ -261,7 +261,7 @@ namespace Thijs.Framework.MarchingSquares
                     break;
                 #endregion Two Corners
 
-                //Opposite Corners
+                #region Opposite Corners
                 case 5:
                     if (firstRow)
                     {
@@ -330,6 +330,7 @@ namespace Thijs.Framework.MarchingSquares
                         cache.prevRow[curCacheI + 1],
                         cache.midRow[midCacheI + 1]);
                     break;
+                #endregion Opposite Corners
 
                 #region Three Corners
                 case 7:

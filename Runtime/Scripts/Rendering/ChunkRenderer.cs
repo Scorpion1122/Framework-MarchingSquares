@@ -12,11 +12,7 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private MeshFilter meshFilter;
         private Mesh sharedMesh;
-
-        //Old
-        private NativeMultiHashMap<int, Polygon> polygons;
-        private NativeList<Vector3> vertices;
-
+        
         //New
         private NativeList<float2> jobVertices;
         private List<Vector3> vertexCache;
@@ -47,8 +43,6 @@ namespace Thijs.Framework.MarchingSquares
             sharedMesh = new Mesh();
             meshFilter.sharedMesh = sharedMesh;
 
-            polygons = new NativeMultiHashMap<int, Polygon>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
-            vertices = new NativeList<Vector3>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             jobVertices = new NativeList<float2>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             triangleIndices = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             triangleLengths = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
@@ -59,10 +53,8 @@ namespace Thijs.Framework.MarchingSquares
             if (currentJobHandle != null)
                 currentJobHandle.Value.Complete();
 
-            if (polygons.IsCreated)
+            if (jobVertices.IsCreated)
             {
-                polygons.Dispose();
-                vertices.Dispose();
                 jobVertices.Dispose();
                 triangleIndices.Dispose();
                 triangleLengths.Dispose();
@@ -73,8 +65,6 @@ namespace Thijs.Framework.MarchingSquares
 
         private void ClearJobData()
         {
-            polygons.Clear();
-            vertices.Clear();
             jobVertices.Clear();
             triangleIndices.Clear();
             triangleLengths.Clear();
@@ -100,28 +90,6 @@ namespace Thijs.Framework.MarchingSquares
             };
             currentJobHandle = singlePassMeshGenJob.Schedule(dependency);
             return currentJobHandle.Value;
-            
-            GenerateVoxelPolygonsJob generateVoxelPolygonsJob = new GenerateVoxelPolygonsJob()
-            {
-                resolution = currentGrid.ChunkResolution,
-                size = currentGrid.VoxelSize,
-                generateForFillTypes = currentGrid.SupportedFillTypes,
-                fillTypes = chunkData.fillTypes,
-                offsets = chunkData.offsets,
-                polygons = polygons.ToConcurrent(),
-            };
-            currentJobHandle = generateVoxelPolygonsJob.Schedule(currentGrid.VoxelsPerChunk, 64, dependency);
-
-            GenerateMeshDataJob generateMeshDataJob = new GenerateMeshDataJob()
-            {
-                polygons = polygons,
-                vertices = vertices,
-                generateForFillTypes = currentGrid.SupportedFillTypes,
-                triangleIndices = triangleIndices,
-                triangleLengths = triangleLengths,
-            };
-            currentJobHandle = generateMeshDataJob.Schedule(currentJobHandle.Value);
-            return currentJobHandle.Value;
         }
 
         public void OnJobCompleted()
@@ -137,7 +105,6 @@ namespace Thijs.Framework.MarchingSquares
             int subMeshCount = GetSubMeshCount();
             Material[] materials = new Material[subMeshCount];
             sharedMesh.subMeshCount = subMeshCount;
-            //sharedMesh.vertices = vertices.ToArray();
 
             WriteJobVerticesToVertexCache();
             sharedMesh.SetVertices(vertexCache);

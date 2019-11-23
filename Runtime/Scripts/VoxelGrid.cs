@@ -20,8 +20,8 @@ namespace Thijs.Framework.MarchingSquares
         [FormerlySerializedAs("size")] [SerializeField]
         private float voxelSize = 1f;
 
-        [SerializeField] private MaterialTemplate materialTemplate;
-        [SerializeField] private WorldGeneration worldGenerationTest;
+        [SerializeField] private MaterialTemplate materialTemplate = null;
+        [SerializeField] private WorldGeneration worldGenerationTest = null;
 
         [Header("Debug")] [SerializeField] private bool drawGizmos = false;
 
