@@ -126,7 +126,7 @@ namespace Thijs.Framework.MarchingSquares
                 case 0:
                     break;
 
-                //One Corner
+                #region One Corner
                 case 1:
                     if (firstRow && firstColumn)
                     {
@@ -200,8 +200,9 @@ namespace Thijs.Framework.MarchingSquares
                         cache.prevRow[curCacheI + 1], 
                         cache.midRow[midCacheI + 1]);
                     break;
-
-                //Two Corners
+                #endregion One Corner
+                
+                #region Two Corners
                 case 3:
                     if (firstRow)
                     {
@@ -293,30 +294,79 @@ namespace Thijs.Framework.MarchingSquares
                         cache.midRow[midCacheI],
                         cache.midRow[midCacheI + 1]);
                     break;
+                #endregion Two Corners
 
-//                //Opposite Corners
-//                case 5:
-//                    AddCrossCornerPolygon(
-//                        fillType,
-//                        curPosition,
-//                        curPosition + new float2(0, currentOffset.y),
-//                        curPosition + new float2(currentOffset.x, 0),
-//                        topRightPosition,
-//                        rightPosition + new float2(0, rightOffset.y),
-//                        topPosition + new float2(topOffset.x, 0));
-//                    break;
-//                case 10:
-//                    AddCrossCornerPolygon(
-//                        fillType,
-//                        topPosition,
-//                        topPosition + new float2(topOffset.x, 0),
-//                        curPosition + new float2(0, currentOffset.y),
-//                        rightPosition,
-//                        curPosition + new float2(currentOffset.x, 0),
-//                        rightPosition + new float2(0, rightOffset.y));
-//                    break;
-//
-//                //Three Corners
+                //Opposite Corners
+                case 5:
+                    if (firstRow)
+                    {
+                        vertices.Add(curPosition); //v1
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v3
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                    }
+
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v2
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(topRightPosition); //v4
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+                        
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v5
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v6
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+                    
+                    AddTriangle(
+                        cache.prevRow[curCacheI],
+                        cache.midRow[midCacheI],
+                        cache.prevRow[curCacheI + 1]);
+                    AddTriangle(
+                        cache.nextRow[curCacheI + 2],
+                        cache.midRow[midCacheI + 1],
+                        cache.nextRow[curCacheI + 1]);
+                    break;
+                case 10:
+                    vertices.Add(topPosition); //v1
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v2
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v3
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v4
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v5
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v6
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+
+                    AddTriangle(
+                        cache.nextRow[curCacheI],
+                        cache.nextRow[curCacheI + 1],
+                        cache.midRow[midCacheI]);
+                    AddTriangle(
+                        cache.prevRow[curCacheI + 2],
+                        cache.prevRow[curCacheI + 1],
+                        cache.midRow[midCacheI + 1]);
+                    break;
+
+                #region Three Corners
                 case 7:
                     vertices.Add(topPosition); //v1
                     cache.nextRow[curCacheI] = vertices.Length - 1;
@@ -343,35 +393,93 @@ namespace Thijs.Framework.MarchingSquares
                         cache.prevRow[curCacheI + 1],
                         cache.prevRow[curCacheI]);
                     break;
-//                case 14:
-//                    AddThreeCornersPolygon(
-//                        fillType,
-//                        topRightPosition,
-//                        rightPosition,
-//                        curPosition + new float2(currentOffset.x, 0),
-//                        curPosition + new float2(0, currentOffset.y),
-//                        topPosition);
-//                    break;
-//                case 13:
-//                    AddThreeCornersPolygon(
-//                        fillType,
-//                        rightPosition,
-//                        curPosition,
-//                        curPosition + new float2(0, currentOffset.y),
-//                        topPosition + new float2(topOffset.x, 0),
-//                        topRightPosition);
-//                    break;
-//                case 11:
-//                    AddThreeCornersPolygon(
-//                        fillType,
-//                        curPosition,
-//                        topPosition,
-//                        topPosition + new float2(topOffset.x, 0),
-//                        rightPosition + new float2(0, rightOffset.y),
-//                        rightPosition);
-//                    break;
-//
-                //All Corners
+                case 14:
+                    vertices.Add(topRightPosition); //v1
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v2
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+
+                        vertices.Add(curPosition + new float2(currentOffset.x, 0)); //v3
+                        cache.prevRow[curCacheI + 1] = vertices.Length - 1;
+                    }
+
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v4
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+
+                    vertices.Add(topPosition); //v5
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    AddPentagon(
+                        cache.nextRow[curCacheI + 2],
+                        cache.prevRow[curCacheI + 2],
+                        cache.prevRow[curCacheI + 1],
+                        cache.midRow[midCacheI],
+                        cache.nextRow[curCacheI]);
+                    break;
+                case 13:
+                    if (firstRow)
+                    {
+                        vertices.Add(rightPosition); //v1
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                        
+                        vertices.Add(curPosition); //v2
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                    }
+
+                    if (firstColumn)
+                    {
+                        vertices.Add(curPosition + new float2(0, currentOffset.y)); //v3
+                        cache.midRow[midCacheI] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v4
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+                    
+                    vertices.Add(topRightPosition); //v5
+                    cache.nextRow[curCacheI + 2] = vertices.Length - 1;
+                    
+                    AddPentagon(
+                        cache.prevRow[curCacheI + 2],
+                        cache.prevRow[curCacheI],
+                        cache.midRow[midCacheI],
+                        cache.nextRow[curCacheI + 1],
+                        cache.nextRow[curCacheI + 2]);
+                    break;
+                case 11:
+                    if (firstRow)
+                    {
+                        vertices.Add(curPosition); //v1
+                        cache.prevRow[curCacheI] = vertices.Length - 1;
+                        
+                        vertices.Add(rightPosition); //v5
+                        cache.prevRow[curCacheI + 2] = vertices.Length - 1;
+                    }
+                    
+                    vertices.Add(topPosition); //v2
+                    cache.nextRow[curCacheI] = vertices.Length - 1;
+                    
+                    vertices.Add(topPosition + new float2(topOffset.x, 0)); //v3
+                    cache.nextRow[curCacheI + 1] = vertices.Length - 1;
+                    
+                    vertices.Add(rightPosition + new float2(0, rightOffset.y)); //v4
+                    cache.midRow[midCacheI + 1] = vertices.Length - 1;
+                    
+                    AddPentagon(
+                        cache.prevRow[curCacheI],
+                        cache.nextRow[curCacheI],
+                        cache.nextRow[curCacheI + 1],
+                        cache.midRow[midCacheI + 1],
+                        cache.prevRow[curCacheI + 2]);
+                    break;
+                #endregion Three Corners
+                
+                #region All Corners
                 case 15:
                     if (firstColumn)
                     {
@@ -396,6 +504,7 @@ namespace Thijs.Framework.MarchingSquares
                         cache.nextRow[curCacheI + 2],
                         cache.prevRow[curCacheI + 2]);
                     break;
+                #endregion All Corners
             }
         }
 
