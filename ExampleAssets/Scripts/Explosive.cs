@@ -24,7 +24,7 @@ public class Explosive : MonoBehaviour
 
         grid.ModifyGrid(new GridModification()
         {
-            modifierType = ModifierType.Circle,
+            ModifierShape = ModifierShape.Circle,
             setFilltype = FillType.None,
             position = center,
             size = radius,

@@ -37,6 +37,7 @@ namespace Thijs.Framework.MarchingSquares
         private ChunkRenderer[] renderers;
         private ChunkCollider[] colliders;
 
+        private List<GridModification> scheduledModifications = new List<GridModification>();
         private NativeArray<FillType> supportedFillTypes;
         private List<ChunkData> activeJobHandles;
         private HashSet<int> dirtyChunks;
@@ -46,7 +47,7 @@ namespace Thijs.Framework.MarchingSquares
         private void OnEnable()
         {
             Initialize();
-            routine = StartCoroutine(EndOfFrameEnuemrator());
+            routine = StartCoroutine(EndOfFrameEnumerator());
         }
 
         private void Initialize()
@@ -106,6 +107,43 @@ namespace Thijs.Framework.MarchingSquares
 
         public void ModifyGrid(GridModification modification)
         {
+            scheduledModifications.Add(modification);
+        }
+
+        // Start jobs before rendering
+        private void LateUpdate()
+        {
+            Profiler.BeginSample("Voxel Grid - Late Update");
+            CompleteChunkJobs();
+            AddScheduledModificationsToChunks();
+            ScheduleChunkJobs();
+            
+            if (!Application.isPlaying)
+                CompleteChunkJobs();
+            Profiler.EndSample();
+        }
+
+        // Wait for after rendering
+        private IEnumerator EndOfFrameEnumerator()
+        {
+            while (true)
+            {
+                yield return new WaitForEndOfFrame();
+                CompleteChunkJobs();
+            }
+        }
+
+        private void AddScheduledModificationsToChunks()
+        {
+            for (int i = 0; i < scheduledModifications.Count; i++)
+            {
+                AddScheduledModificationToChunks(scheduledModifications[i]);
+            }
+            scheduledModifications.Clear();
+        }
+
+        private void AddScheduledModificationToChunks(GridModification modification)
+        {
             Rect modificationBounds = modification.GetBounds();
             for (int i = 0; i < chunks.Length; i++)
             {
@@ -115,11 +153,11 @@ namespace Thijs.Framework.MarchingSquares
 
                 Rect chunkBounds = chunk.GetBounds();
                 if (chunkBounds.Intersects(modificationBounds))
-                    AddModifierToChunk(i, modification);
+                    AddScheduledModificationToChunks(i, modification);
             }
         }
 
-        private void AddModifierToChunk(int index, GridModification modification)
+        private void AddScheduledModificationToChunks(int index, GridModification modification)
         {
             if (!ChunkUtility.IsChunkIndexValid(index, gridResolution))
                 return;
@@ -135,28 +173,7 @@ namespace Thijs.Framework.MarchingSquares
                 dirtyChunks.Add(index);
         }
 
-        // Start jobs before rendering
-        private void LateUpdate()
-        {
-            Profiler.BeginSample("Voxel Grid - Late Update");
-            ScheduleModifyChunkJobs();
-            
-            if (!Application.isPlaying)
-                CompleteModifyChunkJobs();
-            Profiler.EndSample();
-        }
-
-        // Wait for after rendering
-        private IEnumerator EndOfFrameEnuemrator()
-        {
-            while (true)
-            {
-                yield return new WaitForEndOfFrame();
-                CompleteModifyChunkJobs();
-            }
-        }
-
-        private void ScheduleModifyChunkJobs()
+        private void ScheduleChunkJobs()
         {
             if (dirtyChunks.Count == 0)
                 return;
@@ -176,7 +193,7 @@ namespace Thijs.Framework.MarchingSquares
             JobHandle.ScheduleBatchedJobs();
         }
 
-        private void CompleteModifyChunkJobs()
+        private void CompleteChunkJobs()
         {
             foreach (ChunkData chunkData in activeJobHandles)
             {
@@ -199,7 +216,6 @@ namespace Thijs.Framework.MarchingSquares
 
             ModifyOffsetsJob modifyOffsetsJob = new ModifyOffsetsJob()
             {
-
                 resolution = chunkData.resolution,
                 size = voxelSize,
                 modifiers = chunkData.modifiers,
@@ -252,13 +268,26 @@ namespace Thijs.Framework.MarchingSquares
                     continue;
 
                 VoxelGizmos.DrawVoxels(transform, chunkData, voxelSize);
+            }
+
+            //VoxelGizmos.DrawColliders(transform, chunkData);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (chunks == null)
+                return;
+
+            for (int i = chunks.Length - 1; i >= 0; i--)
+            {
+                ChunkData chunkData = chunks[i];
+                if (chunkData == null)
+                    continue;
 
                 float2 center = chunkData.origin + chunkSize * 0.5f;
                 Vector3 worldCenter = transform.TransformPoint(new Vector3(center.x, center.y, 0));
                 Gizmos.DrawWireCube(worldCenter, new Vector3(voxelSize, voxelSize, 0) * chunkResolution);
             }
-
-            //VoxelGizmos.DrawColliders(transform, chunkData);
         }
     }
 }

@@ -36,8 +36,8 @@ namespace Thijs.Framework.MarchingSquares
         {
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
             meshFilter = gameObject.AddComponent<MeshFilter>();
-            vertexCache = new List<Vector3>();
-            triangleCache = new List<int>();
+            vertexCache = new List<Vector3>(VoxelUtility.NATIVE_CACHE_SIZE);
+            triangleCache = new List<int>(VoxelUtility.NATIVE_CACHE_SIZE);
         }
 
         private void OnEnable()

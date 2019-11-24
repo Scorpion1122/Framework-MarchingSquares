@@ -20,12 +20,12 @@ namespace Thijs.Framework.MarchingSquares
             for (int i = 0; i < modifiers.Length; i++)
             {
                 GridModification modifier = modifiers[i];
-                switch (modifier.modifierType)
+                switch (modifier.ModifierShape)
                 {
-                    case ModifierType.Circle:
+                    case ModifierShape.Circle:
                         fillType = RunCircleModifier(fillType, voxelPosition, modifier);
                         break;
-                    case ModifierType.Square:
+                    case ModifierShape.Square:
                         fillType = RunSquareModifier(fillType, voxelPosition, modifier);
                         break;
                 }

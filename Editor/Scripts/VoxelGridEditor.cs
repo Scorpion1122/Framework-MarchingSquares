@@ -8,7 +8,7 @@ namespace Thijs.Framework.MarchingSquares
     [CustomEditor(typeof(VoxelGrid))]
     public class VoxelGridEditor : Editor
     {
-        private ModifierType modifierType = ModifierType.Circle;
+        private ModifierShape modifierShape = ModifierShape.Circle;
         private FillType fillType = FillType.TypeOne;
         private float modifierSize = 0.5f;
 
@@ -31,7 +31,7 @@ namespace Thijs.Framework.MarchingSquares
         {
             GUILayout.BeginVertical("box");
             {
-                modifierType = (ModifierType) EditorGUILayout.EnumPopup("Brush", modifierType);
+                modifierShape = (ModifierShape) EditorGUILayout.EnumPopup("Brush", modifierShape);
                 fillType = (FillType) EditorGUILayout.EnumPopup("Type", fillType);
                 modifierSize = EditorGUILayout.FloatField("Size", modifierSize);
             }
@@ -46,11 +46,11 @@ namespace Thijs.Framework.MarchingSquares
             if (!GetMousePositionOnGrid(out handlePosition))
                 return;
 
-            if (modifierType == ModifierType.Circle)
+            if (modifierShape == ModifierShape.Circle)
             {
                 Handles.DrawWireDisc(handlePosition, voxelGrid.transform.forward, modifierSize);
             }
-            else if (modifierType == ModifierType.Square)
+            else if (modifierShape == ModifierShape.Square)
             {
                 Handles.DrawWireCube(handlePosition, new Vector3(modifierSize, modifierSize, 0f) * 2f);
             }
@@ -70,7 +70,7 @@ namespace Thijs.Framework.MarchingSquares
                 Vector3 localPosition = voxelGrid.transform.InverseTransformPoint(handlePosition);
                 GridModification modification = new GridModification()
                 {
-                    modifierType = modifierType,
+                    ModifierShape = modifierShape,
                     position = new float2(localPosition.x, localPosition.y),
                     setFilltype = fillType,
                     size = modifierSize,

@@ -17,7 +17,7 @@ namespace Thijs.Framework.MarchingSquares
         private VoxelGrid currentGrid;
         private JobHandle? currentJobHandle;
 
-        private List<EdgeCollider2D> colliders;
+        private Dictionary<int, ColliderPool> colliderPools = new Dictionary<int, ColliderPool>();
 
         public static ChunkCollider CreateNewInstance(Transform parent)
         {
@@ -33,7 +33,6 @@ namespace Thijs.Framework.MarchingSquares
             lengths = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             types = new NativeList<FillType>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
             processedCache = new NativeList<int>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
-            colliders = new List<EdgeCollider2D>();
         }
 
         private void OnDisable()
@@ -49,7 +48,11 @@ namespace Thijs.Framework.MarchingSquares
                 processedCache.Dispose();
             }
 
-            colliders = null;
+            foreach (var pool in colliderPools)
+            {
+                pool.Value.Dispose();
+            }
+            colliderPools.Clear();
         }
 
         private void ClearJobData()
@@ -87,18 +90,14 @@ namespace Thijs.Framework.MarchingSquares
 
         public void OnJobCompleted()
         {
-            EnsureColliderCapacity(lengths.Length);
-
+            ResetColliderPools();
             int offset = 0;
             for (int i = 0; i < lengths.Length; i++)
             {
                 int length = lengths[i];
                 FillType fillType = types[i];
-
-                EdgeCollider2D collider = colliders[i];
-                
-                if (currentGrid.MaterialTemplate != null)
-                    collider.sharedMaterial = currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
+                int layer = GetLayerForFillType(fillType);
+                PhysicsMaterial2D material = GetMaterialForFillType(fillType);
 
                 Vector2[] points = new Vector2[length];
                 for (int j = 0; j < length; j++)
@@ -106,30 +105,54 @@ namespace Thijs.Framework.MarchingSquares
                     float2 vertex = vertices[j + offset];
                     points[j] = new Vector2(vertex.x, vertex.y);
                 }
-
-                collider.points = points;
+                
+                ColliderPool pool = GetColliderPool(layer);
+                pool.AddEdge(material, points);
 
                 offset += length;
             }
+            ClearUnusedColliders();
         }
 
-        private void EnsureColliderCapacity(int amount)
+        private void ResetColliderPools()
         {
-            if (colliders == null)
-                return;
-
-            int overflow = colliders.Count - amount;
-            for (int i = 0; i < overflow; i++)
+            foreach (var colliderPool in colliderPools)
             {
-                DestroyImmediate(colliders[colliders.Count - 1]);
-                colliders.RemoveAt(colliders.Count - 1);
+                colliderPool.Value.ResetUsage();
             }
-
-            int missing = amount - colliders.Count;
-            for (int i = 0; i < missing; i++)
+        }
+        
+        private void ClearUnusedColliders()
+        {
+            foreach (var colliderPool in colliderPools)
             {
-                colliders.Add(gameObject.AddComponent<EdgeCollider2D>());
+                colliderPool.Value.ClearUnused();
             }
+        }
+
+        private ColliderPool GetColliderPool(int layer)
+        {
+            ColliderPool pool;
+            if (!colliderPools.TryGetValue(layer, out pool))
+            {
+                pool = new ColliderPool(transform, layer);
+                colliderPools.Add(layer, pool);
+            }
+            return pool;
+        }
+
+        private int GetLayerForFillType(FillType fillType)
+        {
+            if (currentGrid.MaterialTemplate != null)
+                return currentGrid.MaterialTemplate.GetLayer(fillType);
+            return Layers.DEFAULT;
+        }
+
+        private PhysicsMaterial2D GetMaterialForFillType(FillType fillType)
+        {
+            if (currentGrid.MaterialTemplate != null)
+                return currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
+            return null;
         }
     }
 }
