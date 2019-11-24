@@ -13,8 +13,8 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private PhysicsMaterial2D typeOnePhysicsMaterial = null;
         [SerializeField] private PhysicsMaterial2D typeTwoPhysicsMaterial = null;
 
-        [SerializeField, Layer] private int typeOneLayer;
-        [SerializeField, Layer] private int typeTwoLayer;
+        [SerializeField, Layer] private int typeOneLayer = 0;
+        [SerializeField, Layer] private int typeTwoLayer = 0;
 
         public Material GetMaterial(FillType fillType)
         {

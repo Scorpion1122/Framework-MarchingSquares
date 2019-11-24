@@ -13,8 +13,6 @@ namespace Thijs.Framework.MarchingSquares
     [ExecuteInEditMode]
     public class TileTerrain : MonoBehaviour
     {
-        [SerializeField] private int gridResolution = 2;
-
         [Header("Chunk Configuration")] [FormerlySerializedAs("resolution")] [SerializeField]
         private int chunkResolution = 128;
 
@@ -75,14 +73,7 @@ namespace Thijs.Framework.MarchingSquares
             StopCoroutine(routine);
             foreach (var chunkData in chunks)
             {
-                foreach (var dependency in chunkData.Value.dependencies)
-                {
-                    if (dependency is Component component)
-                    {
-                        DestroyImmediate(component.gameObject);
-                    }
-                }
-                chunkData.Value.Dispose();
+                DisposeOfChunk(chunkData.Value);
             }
             chunks = null;
             supportedFillTypes.Dispose();
@@ -112,7 +103,20 @@ namespace Thijs.Framework.MarchingSquares
 
         public void UnloadChunk(int2 chunkIndex)
         {
-            
+            DisposeOfChunk(chunks[chunkIndex]);
+            chunks.Remove(chunkIndex);
+        }
+
+        private void DisposeOfChunk(ChunkData chunkData)
+        {
+            foreach (var dependency in chunkData.dependencies)
+            {
+                if (dependency is Component component)
+                {
+                    DestroyImmediate(component.gameObject);
+                }
+            }
+            chunkData.Dispose();
         }
         #endregion
 
