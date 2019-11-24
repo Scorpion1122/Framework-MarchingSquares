@@ -4,7 +4,7 @@ namespace Thijs.Framework.MarchingSquares
 {
     public interface IChunkJobDependency
     {
-        JobHandle ScheduleChunkJob(VoxelGrid grid, ChunkData chunkData, JobHandle dependency);
+        JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency);
 
         void OnJobCompleted();
     }

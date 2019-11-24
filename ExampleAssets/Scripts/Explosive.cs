@@ -9,11 +9,11 @@ public class Explosive : MonoBehaviour
     [Header("Collision")]
     [SerializeField] private float collisionOffset = 0f;
 
-    private VoxelGrid grid;
+    private TileTerrain grid;
 
     private void OnEnable()
     {
-        grid = FindObjectOfType<VoxelGrid>();
+        grid = FindObjectOfType<TileTerrain>();
     }
 
     private void OnCollisionEnter2D(Collision2D other)

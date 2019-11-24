@@ -14,7 +14,7 @@ namespace Thijs.Framework.MarchingSquares
         private NativeList<FillType> types;
         private NativeList<int> processedCache;
 
-        private VoxelGrid currentGrid;
+        private TileTerrain currentGrid;
         private JobHandle? currentJobHandle;
 
         private Dictionary<int, ColliderPool> colliderPools = new Dictionary<int, ColliderPool>();
@@ -63,7 +63,7 @@ namespace Thijs.Framework.MarchingSquares
             processedCache.Clear();
         }
 
-        public JobHandle ScheduleChunkJob(VoxelGrid grid, ChunkData chunkData, JobHandle dependency)
+        public JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency)
         {
             currentGrid = grid;
             ClearJobData();
@@ -72,7 +72,7 @@ namespace Thijs.Framework.MarchingSquares
             {
                 //Input
                 resolution = currentGrid.ChunkResolution,
-                size = currentGrid.VoxelSize,
+                size = currentGrid.TileSize,
                 fillTypes = chunkData.fillTypes,
                 offsets = chunkData.offsets,
                 supportedFillTypes = currentGrid.SupportedFillTypes,

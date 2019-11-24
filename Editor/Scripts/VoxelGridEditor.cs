@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
-    [CustomEditor(typeof(VoxelGrid))]
+    [CustomEditor(typeof(TileTerrain))]
     public class VoxelGridEditor : Editor
     {
         private ModifierShape modifierShape = ModifierShape.Circle;
@@ -14,11 +14,11 @@ namespace Thijs.Framework.MarchingSquares
 
         private bool didPress;
 
-        private VoxelGrid voxelGrid;
+        private TileTerrain tileTerrain;
 
         private void OnEnable()
         {
-            voxelGrid = (VoxelGrid) target;
+            tileTerrain = (TileTerrain) target;
             Tools.hidden = true;
         }
 
@@ -48,7 +48,7 @@ namespace Thijs.Framework.MarchingSquares
 
             if (modifierShape == ModifierShape.Circle)
             {
-                Handles.DrawWireDisc(handlePosition, voxelGrid.transform.forward, modifierSize);
+                Handles.DrawWireDisc(handlePosition, tileTerrain.transform.forward, modifierSize);
             }
             else if (modifierShape == ModifierShape.Square)
             {
@@ -67,7 +67,7 @@ namespace Thijs.Framework.MarchingSquares
 
             if (didPress && Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout)
             {
-                Vector3 localPosition = voxelGrid.transform.InverseTransformPoint(handlePosition);
+                Vector3 localPosition = tileTerrain.transform.InverseTransformPoint(handlePosition);
                 GridModification modification = new GridModification()
                 {
                     ModifierShape = modifierShape,
@@ -75,7 +75,7 @@ namespace Thijs.Framework.MarchingSquares
                     setFilltype = fillType,
                     size = modifierSize,
                 };
-                voxelGrid.ModifyGrid(modification);
+                tileTerrain.ModifyGrid(modification);
                 EditorApplication.QueuePlayerLoopUpdate();
                 Event.current.Use();
             }
@@ -88,7 +88,7 @@ namespace Thijs.Framework.MarchingSquares
         private bool GetMousePositionOnGrid(out Vector3 position)
         {
             Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-            Plane plane = new Plane(voxelGrid.transform.forward, voxelGrid.transform.position);
+            Plane plane = new Plane(tileTerrain.transform.forward, tileTerrain.transform.position);
 
             float distnance;
             if (plane.Raycast(ray, out distnance))

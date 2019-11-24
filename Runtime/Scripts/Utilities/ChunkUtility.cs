@@ -19,13 +19,12 @@ namespace Thijs.Framework.MarchingSquares
         public static float2 GetChunkOrigin(int index, int gridResolution, float chunkSize)
         {
             int2 index2 = IndexToIndex2(index, gridResolution);
-            float2 originOffset = GetGridOrigin(gridResolution, chunkSize);
-            return new float2(index2.x * chunkSize, index2.y * chunkSize) + originOffset;
+            return GetChunkOrigin(index2, chunkSize);
         }
 
-        public static float2 GetGridOrigin(int gridResolution, float chunkSize)
+        public static float2 GetChunkOrigin(int2 index, float chunkSize)
         {
-            return new float2(-0.5f, -0.5f) * gridResolution * chunkSize;
+            return new float2(index.x * chunkSize, index.y * chunkSize);
         }
 
         public static int PositionToChunkIndex(float2 position, int gridResolution, float chunkSize)

@@ -11,36 +11,35 @@ using UnityEngine.Serialization;
 namespace Thijs.Framework.MarchingSquares
 {
     [ExecuteInEditMode]
-    public class VoxelGrid : MonoBehaviour
+    public class TileTerrain : MonoBehaviour
     {
         [SerializeField] private int gridResolution = 2;
 
         [Header("Chunk Configuration")] [FormerlySerializedAs("resolution")] [SerializeField]
         private int chunkResolution = 128;
 
-        [FormerlySerializedAs("size")] [SerializeField]
-        private float voxelSize = 1f;
+        [FormerlySerializedAs("voxelSize")] [FormerlySerializedAs("size")] [SerializeField]
+        private float tileSize = 1f;
 
         [SerializeField] private MaterialTemplate materialTemplate = null;
         [SerializeField] private WorldGeneration worldGenerationTest = null;
 
-        [Header("Debug")] [SerializeField] private bool drawGizmos = false;
+        [Header("Debug")] 
+        [SerializeField] private bool drawGizmos = false;
 
-        public float VoxelSize => voxelSize;
+        public float TileSize => tileSize;
         public int ChunkResolution => chunkResolution + 1;
-        public int VoxelsPerChunk => ChunkResolution * ChunkResolution;
+        public int TilesPerChunk => ChunkResolution * ChunkResolution;
         public MaterialTemplate MaterialTemplate => materialTemplate;
         public NativeArray<FillType> SupportedFillTypes => supportedFillTypes;
 
         private float chunkSize;
-        private ChunkData[] chunks;
-        private ChunkRenderer[] renderers;
-        private ChunkCollider[] colliders;
+        private Dictionary<int2, ChunkData> chunks;
 
         private List<GridModification> scheduledModifications = new List<GridModification>();
         private NativeArray<FillType> supportedFillTypes;
         private List<ChunkData> activeJobHandles;
-        private HashSet<int> dirtyChunks;
+        private HashSet<int2> dirtyChunks;
 
         private Coroutine routine;
         
@@ -48,37 +47,20 @@ namespace Thijs.Framework.MarchingSquares
         {
             Initialize();
             routine = StartCoroutine(EndOfFrameEnumerator());
+            
+            LoadChunk(new int2(-1, -1));
+            LoadChunk(new int2(0, -1));
+            LoadChunk(new int2(-1, 0));
+            LoadChunk(new int2(0, 0));
         }
 
         private void Initialize()
         {
-            chunkSize = voxelSize * chunkResolution;
+            chunkSize = tileSize * chunkResolution;
 
-            dirtyChunks = new HashSet<int>();
+            chunks = new Dictionary<int2, ChunkData>();
+            dirtyChunks = new HashSet<int2>();
             activeJobHandles = new List<ChunkData>();
-
-            chunks = new ChunkData[gridResolution * gridResolution];
-            renderers = new ChunkRenderer[chunks.Length];
-            colliders = new ChunkCollider[chunks.Length];
-
-            for (int i = 0; i < chunks.Length; i++)
-            {
-                float2 origin = ChunkUtility.GetChunkOrigin(i, gridResolution, chunkSize);
-                chunks[i] = new ChunkData(origin, chunkSize, chunkResolution + 1);
-
-                //Generate Data
-                if (worldGenerationTest != null)
-                {
-                    worldGenerationTest.GenerateChunkData(this, chunks[i]);
-                    dirtyChunks.Add(i);
-                }
-
-                renderers[i] = ChunkRenderer.CreateNewInstance(transform);
-                renderers[i].transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
-
-                colliders[i] = ChunkCollider.CreateNewInstance(transform);
-                colliders[i].transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
-            }
 
             FillType[] allFillTypes = (FillType[]) Enum.GetValues(typeof(FillType));
             supportedFillTypes = new NativeArray<FillType>(allFillTypes.Length - 1, Allocator.Persistent);
@@ -90,26 +72,51 @@ namespace Thijs.Framework.MarchingSquares
 
         private void OnDisable()
         {
-            for (int i = 0; i < chunks.Length; i++)
-            {
-                chunks[i].Dispose();
-                DestroyImmediate(renderers[i].gameObject);
-                DestroyImmediate(colliders[i].gameObject);
-            }
-
-            chunks = null;
-            renderers = null;
-            colliders = null;
-
-            supportedFillTypes.Dispose();
             StopCoroutine(routine);
+            foreach (var chunkData in chunks)
+            {
+                foreach (var dependency in chunkData.Value.dependencies)
+                {
+                    if (dependency is Component component)
+                    {
+                        DestroyImmediate(component.gameObject);
+                    }
+                }
+                chunkData.Value.Dispose();
+            }
+            chunks = null;
+            supportedFillTypes.Dispose();
         }
-
-        public void ModifyGrid(GridModification modification)
+        
+        #region Loading
+        public void LoadChunk(int2 chunkIndex)
         {
-            scheduledModifications.Add(modification);
+            InitializeChunk(chunkIndex);
         }
 
+        private void InitializeChunk(int2 chunkIndex)
+        {
+            float2 origin = ChunkUtility.GetChunkOrigin(chunkIndex, chunkSize);
+            ChunkData chunkData = new ChunkData(origin, chunkSize, chunkResolution + 1);
+
+            ChunkRenderer chunkRenderer = ChunkRenderer.CreateNewInstance(transform);
+            chunkRenderer.transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
+            chunkData.dependencies.Add(chunkRenderer);
+
+            ChunkCollider chunkCcolliders = ChunkCollider.CreateNewInstance(transform);
+            chunkCcolliders.transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
+            chunkData.dependencies.Add(chunkCcolliders);
+            
+            chunks.Add(chunkIndex, chunkData);
+        }
+
+        public void UnloadChunk(int2 chunkIndex)
+        {
+            
+        }
+        #endregion
+
+        #region Job Scheduling
         // Start jobs before rendering
         private void LateUpdate()
         {
@@ -133,58 +140,18 @@ namespace Thijs.Framework.MarchingSquares
             }
         }
 
-        private void AddScheduledModificationsToChunks()
-        {
-            for (int i = 0; i < scheduledModifications.Count; i++)
-            {
-                AddScheduledModificationToChunks(scheduledModifications[i]);
-            }
-            scheduledModifications.Clear();
-        }
-
-        private void AddScheduledModificationToChunks(GridModification modification)
-        {
-            Rect modificationBounds = modification.GetBounds();
-            for (int i = 0; i < chunks.Length; i++)
-            {
-                ChunkData chunk = chunks[i];
-                if (chunk == null)
-                    continue;
-
-                Rect chunkBounds = chunk.GetBounds();
-                if (chunkBounds.Intersects(modificationBounds))
-                    AddScheduledModificationToChunks(i, modification);
-            }
-        }
-
-        private void AddScheduledModificationToChunks(int index, GridModification modification)
-        {
-            if (!ChunkUtility.IsChunkIndexValid(index, gridResolution))
-                return;
-
-            ChunkData chunkData = chunks[index];
-            if (chunkData == null)
-                return;
-
-            modification.position = modification.position - chunkData.origin;
-            chunkData.modifiers.Add(modification);
-
-            if (!dirtyChunks.Contains(index))
-                dirtyChunks.Add(index);
-        }
-
         private void ScheduleChunkJobs()
         {
             if (dirtyChunks.Count == 0)
                 return;
 
-            foreach (int chunkIndex in dirtyChunks)
+            foreach (int2 chunkIndex in dirtyChunks)
             {
                 ChunkData chunkData = chunks[chunkIndex];
                 if (chunkData == null)
                     continue;
 
-                ScheduleModifyChunkJob(chunkIndex, chunkData);
+                ScheduleChunkJob(chunkData);
                 activeJobHandles.Add(chunkData);
             }
 
@@ -202,13 +169,13 @@ namespace Thijs.Framework.MarchingSquares
             activeJobHandles.Clear();
         }
 
-        private void ScheduleModifyChunkJob(int chunkIndex, ChunkData chunkData)
+        private void ScheduleChunkJob(ChunkData chunkData)
         {
             int voxelCount = chunkData.fillTypes.Length;
             ModifyFillTypeJob modifyFillJob = new ModifyFillTypeJob()
             {
                 resolution = chunkData.resolution,
-                size = voxelSize,
+                size = tileSize,
                 modifiers = chunkData.modifiers,
                 fillTypes = chunkData.fillTypes,
             };
@@ -217,14 +184,13 @@ namespace Thijs.Framework.MarchingSquares
             ModifyOffsetsJob modifyOffsetsJob = new ModifyOffsetsJob()
             {
                 resolution = chunkData.resolution,
-                size = voxelSize,
+                size = tileSize,
                 modifiers = chunkData.modifiers,
                 fillTypes = chunkData.fillTypes,
                 offsets = chunkData.offsets,
             };
             jobHandle = modifyOffsetsJob.Schedule(voxelCount, 64, jobHandle);
 
-            GetChunkDependencies(chunkIndex, chunkData);
             for (int i = 0; i < chunkData.dependencies.Count; i++)
             {
                 JobHandle dependencyHandle = chunkData.dependencies[i].ScheduleChunkJob(this, chunkData, jobHandle);
@@ -245,32 +211,55 @@ namespace Thijs.Framework.MarchingSquares
                 chunkData.dependencies[i].OnJobCompleted();
             }
 
-            chunkData.dependencies.Clear();
             chunkData.modifiers.Clear();
             chunkData.jobHandle = null;
         }
+        #endregion Job Scheduling
 
-        private void GetChunkDependencies(int chunkIndex, ChunkData chunkData)
+        #region Modifiers
+        public void ModifyGrid(GridModification modification)
         {
-            chunkData.dependencies.Add(renderers[chunkIndex]);
-            chunkData.dependencies.Add(colliders[chunkIndex]);
+            scheduledModifications.Add(modification);
         }
+        private void AddScheduledModificationsToChunks()
+        {
+            for (int i = 0; i < scheduledModifications.Count; i++)
+            {
+                AddScheduledModificationToChunks(scheduledModifications[i]);
+            }
+            scheduledModifications.Clear();
+        }
+
+        private void AddScheduledModificationToChunks(GridModification modification)
+        {
+            Rect modificationBounds = modification.GetBounds();
+            foreach (var chunkData in chunks)
+            {
+                Rect chunkBounds = chunkData.Value.GetBounds();
+                if (chunkBounds.Intersects(modificationBounds))
+                    AddScheduledModificationToChunks(chunkData.Key, chunkData.Value, modification);
+            }
+        }
+
+        private void AddScheduledModificationToChunks(int2 index, ChunkData chunk, GridModification modification)
+        {
+            modification.position = modification.position - chunk.origin;
+            chunk.modifiers.Add(modification);
+
+            if (!dirtyChunks.Contains(index))
+                dirtyChunks.Add(index);
+        }
+        #endregion Modifiers
 
         private void OnDrawGizmos()
         {
             if (chunks == null || !drawGizmos)
                 return;
 
-            for (int i = chunks.Length - 1; i >= 0; i--)
+            foreach (var chunkData in chunks)
             {
-                ChunkData chunkData = chunks[i];
-                if (chunkData == null)
-                    continue;
-
-                VoxelGizmos.DrawVoxels(transform, chunkData, voxelSize);
+                VoxelGizmos.DrawVoxels(transform, chunkData.Value, tileSize);
             }
-
-            //VoxelGizmos.DrawColliders(transform, chunkData);
         }
 
         private void OnDrawGizmosSelected()
@@ -278,15 +267,11 @@ namespace Thijs.Framework.MarchingSquares
             if (chunks == null)
                 return;
 
-            for (int i = chunks.Length - 1; i >= 0; i--)
+            foreach (var chunkData in chunks)
             {
-                ChunkData chunkData = chunks[i];
-                if (chunkData == null)
-                    continue;
-
-                float2 center = chunkData.origin + chunkSize * 0.5f;
+                float2 center = chunkData.Value.origin + chunkSize * 0.5f;
                 Vector3 worldCenter = transform.TransformPoint(new Vector3(center.x, center.y, 0));
-                Gizmos.DrawWireCube(worldCenter, new Vector3(voxelSize, voxelSize, 0) * chunkResolution);
+                Gizmos.DrawWireCube(worldCenter, new Vector3(tileSize, tileSize, 0) * chunkResolution);
             }
         }
     }

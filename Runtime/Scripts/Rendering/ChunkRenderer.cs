@@ -21,7 +21,7 @@ namespace Thijs.Framework.MarchingSquares
         private NativeList<int> triangleIndices;
         private NativeList<int> triangleLengths;
 
-        private VoxelGrid currentGrid;
+        private TileTerrain currentGrid;
         private JobHandle? currentJobHandle;
 
         public static ChunkRenderer CreateNewInstance(Transform parent)
@@ -72,7 +72,7 @@ namespace Thijs.Framework.MarchingSquares
             triangleLengths.Clear();
         }
 
-        public JobHandle ScheduleChunkJob(VoxelGrid grid, ChunkData chunkData, JobHandle dependency)
+        public JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency)
         {
             currentGrid = grid;
 
@@ -80,7 +80,7 @@ namespace Thijs.Framework.MarchingSquares
             SinglePassGenerateMeshDataJob singlePassMeshGenJob = new SinglePassGenerateMeshDataJob()
             {
                 resolution = currentGrid.ChunkResolution,
-                size = currentGrid.VoxelSize,
+                size = currentGrid.TileSize,
                 generateForFillTypes = currentGrid.SupportedFillTypes,
                 
                 fillTypes = chunkData.fillTypes,
