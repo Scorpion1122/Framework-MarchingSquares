@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -40,9 +41,12 @@ namespace Thijs.Framework.MarchingSquares
         private List<ChunkData> activeJobHandles;
         private HashSet<int> dirtyChunks;
 
+        private Coroutine routine;
+        
         private void OnEnable()
         {
             Initialize();
+            routine = StartCoroutine(EndOfFrameEnuemrator());
         }
 
         private void Initialize()
@@ -97,6 +101,7 @@ namespace Thijs.Framework.MarchingSquares
             colliders = null;
 
             supportedFillTypes.Dispose();
+            StopCoroutine(routine);
         }
 
         public void ModifyGrid(GridModification modification)
@@ -130,12 +135,25 @@ namespace Thijs.Framework.MarchingSquares
                 dirtyChunks.Add(index);
         }
 
+        // Start jobs before rendering
         private void LateUpdate()
         {
             Profiler.BeginSample("Voxel Grid - Late Update");
             ScheduleModifyChunkJobs();
-            CompleteModifyChunkJobs();
+            
+            if (!Application.isPlaying)
+                CompleteModifyChunkJobs();
             Profiler.EndSample();
+        }
+
+        // Wait for after rendering
+        private IEnumerator EndOfFrameEnuemrator()
+        {
+            while (true)
+            {
+                yield return new WaitForEndOfFrame();
+                CompleteModifyChunkJobs();
+            }
         }
 
         private void ScheduleModifyChunkJobs()
