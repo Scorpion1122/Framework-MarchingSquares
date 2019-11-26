@@ -35,7 +35,7 @@ namespace Thijs.Framework.MarchingSquares
                 property.arraySize = enumNames.Length;
 
             EditorGUI.indentLevel = EditorGUI.indentLevel + 1;
-            for (int i = 0; i < property.arraySize; i++)
+            for (int i = 1; i < property.arraySize; i++)
             {
                 SerializedProperty itemProperty = property.GetArrayElementAtIndex(i);
                 string label = tileTemplate.GetName((FillType) i);
