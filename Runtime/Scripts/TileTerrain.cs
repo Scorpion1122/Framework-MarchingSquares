@@ -10,9 +10,11 @@ using UnityEngine.Serialization;
 
 namespace Thijs.Framework.MarchingSquares
 {
-    [ExecuteInEditMode]
+    [ExecuteInEditMode, DefaultExecutionOrder(-10)]
     public class TileTerrain : MonoBehaviour
     {
+        public event Action<int2, ChunkData> OnChunkInitialized;
+        
         [Header("Chunk Configuration")] [FormerlySerializedAs("resolution")] [SerializeField]
         private int chunkResolution = 128;
 
@@ -89,16 +91,10 @@ namespace Thijs.Framework.MarchingSquares
         {
             float2 origin = ChunkUtility.GetChunkOrigin(chunkIndex, chunkSize);
             ChunkData chunkData = new ChunkData(origin, chunkSize, chunkResolution + 1);
-
-            ChunkRenderer chunkRenderer = ChunkRenderer.CreateNewInstance(transform);
-            chunkRenderer.transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
-            chunkData.dependencies.Add(chunkRenderer);
-
-            ChunkCollider chunkCcolliders = ChunkCollider.CreateNewInstance(transform);
-            chunkCcolliders.transform.position = transform.TransformPoint(origin.x, origin.y, 0f);
-            chunkData.dependencies.Add(chunkCcolliders);
             
             chunks.Add(chunkIndex, chunkData);
+            
+            OnChunkInitialized?.Invoke(chunkIndex, chunkData);
         }
 
         public void UnloadChunk(int2 chunkIndex)

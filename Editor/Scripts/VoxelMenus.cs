@@ -10,6 +10,8 @@ namespace Thijs.Framework.MarchingSquares
         {
             GameObject gameObject = new GameObject("Voxel Terrain");
             gameObject.AddComponent<TileTerrain>();
+            gameObject.AddComponent<TileTerrainRenderer>();
+            gameObject.AddComponent<TileTerrainCollider>();
         }
     }
 }

@@ -24,14 +24,6 @@ namespace Thijs.Framework.MarchingSquares
         private TileTerrain currentGrid;
         private JobHandle? currentJobHandle;
 
-        public static ChunkRenderer CreateNewInstance(Transform parent)
-        {
-            GameObject gameObject = new GameObject("Chunk Renderer");
-            gameObject.hideFlags = HideFlags.DontSave;
-            gameObject.transform.SetParent(parent);
-            return gameObject.AddComponent<ChunkRenderer>();
-        }
-
         private void Awake()
         {
             meshRenderer = gameObject.AddComponent<MeshRenderer>();

@@ -19,14 +19,6 @@ namespace Thijs.Framework.MarchingSquares
 
         private Dictionary<int, ColliderPool> colliderPools = new Dictionary<int, ColliderPool>();
 
-        public static ChunkCollider CreateNewInstance(Transform parent)
-        {
-            GameObject gameObject = new GameObject("Chunk Collider");
-            gameObject.hideFlags = HideFlags.DontSave;
-            gameObject.transform.SetParent(parent);
-            return gameObject.AddComponent<ChunkCollider>();
-        }
-
         private void OnEnable()
         {
             vertices = new NativeList<float2>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
