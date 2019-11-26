@@ -113,8 +113,8 @@ namespace Thijs.Framework.MarchingSquares
                     WriteJobTrianglesToTriangleCache(offset, length);
                     meshFilter.sharedMesh.SetTriangles(triangleCache, currentSubMesh);
                     
-                    if (currentGrid.MaterialTemplate != null)
-                        materials[currentSubMesh] = currentGrid.MaterialTemplate.GetMaterial((FillType) (i + 1));
+                    if (currentGrid.TileTemplate != null)
+                        materials[currentSubMesh] = currentGrid.TileTemplate.GetMaterial((FillType) (i + 1));
                     currentSubMesh++;
                 }
 

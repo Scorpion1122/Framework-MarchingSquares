@@ -10,11 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d7aa00a39190f541953e2a3f065d476, type: 3}
-  m_Name: Material Template
+  m_Name: Tile Template
   m_EditorClassIdentifier: 
-  typeOneMaterial: {fileID: 2100000, guid: 0008990513fec8b4c91759bb7f0af12f, type: 2}
-  typeTwoMaterial: {fileID: 2100000, guid: 1a8aabb972e63264d8bd4f065764dc81, type: 2}
-  typeOnePhysicsMaterial: {fileID: 0}
-  typeTwoPhysicsMaterial: {fileID: 0}
-  typeOneLayer: 8
-  typeTwoLayer: 8
+  names:
+  - None
+  - Brick
+  - Dirt
+  materials:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  physicsMaterials:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  layers: 000000000800000008000000

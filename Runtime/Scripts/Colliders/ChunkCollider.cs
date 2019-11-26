@@ -135,15 +135,15 @@ namespace Thijs.Framework.MarchingSquares
 
         private int GetLayerForFillType(FillType fillType)
         {
-            if (currentGrid.MaterialTemplate != null)
-                return currentGrid.MaterialTemplate.GetLayer(fillType);
+            if (currentGrid.TileTemplate != null)
+                return currentGrid.TileTemplate.GetLayer(fillType);
             return Layers.DEFAULT;
         }
 
         private PhysicsMaterial2D GetMaterialForFillType(FillType fillType)
         {
-            if (currentGrid.MaterialTemplate != null)
-                return currentGrid.MaterialTemplate.GetPhysicsMaterial(fillType);
+            if (currentGrid.TileTemplate != null)
+                return currentGrid.TileTemplate.GetPhysicsMaterial(fillType);
             return null;
         }
     }
