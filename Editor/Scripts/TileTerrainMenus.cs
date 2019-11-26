@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
-    public static class VoxelMenus
+    public static class TileTerrainMenus
     {
-        [MenuItem("Voxel/Create Terrain")]
+        [MenuItem("Tile Terrain/Create Terrain")]
         private static void CreateNewVoxelTerrain()
         {
-            GameObject gameObject = new GameObject("Voxel Terrain");
+            GameObject gameObject = new GameObject("Tile Terrain");
             gameObject.AddComponent<TileTerrain>();
             gameObject.AddComponent<TileTerrainRenderer>();
             gameObject.AddComponent<TileTerrainCollider>();

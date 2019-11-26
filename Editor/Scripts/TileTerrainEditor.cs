@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Thijs.Framework.MarchingSquares
 {
     [CustomEditor(typeof(TileTerrain))]
-    public class VoxelGridEditor : Editor
+    public class TileTerrainEditor : Editor
     {
         private ModifierShape modifierShape = ModifierShape.Circle;
         private FillType fillType = FillType.TypeOne;

@@ -6,7 +6,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
-using UnityEngine.Serialization;
 
 namespace Thijs.Framework.MarchingSquares
 {
@@ -15,10 +14,11 @@ namespace Thijs.Framework.MarchingSquares
     {
         public event Action<int2, ChunkData> OnChunkInitialized;
         
-        [Header("Chunk Configuration")] [FormerlySerializedAs("resolution")] [SerializeField]
-        private int chunkResolution = 128;
+        [Header("Chunk Configuration")] 
+        [SerializeField]
+        private int chunkResolution = 64;
 
-        [FormerlySerializedAs("voxelSize")] [FormerlySerializedAs("size")] [SerializeField]
+        [SerializeField]
         private float tileSize = 1f;
 
         [SerializeField] private MaterialTemplate materialTemplate = null;
