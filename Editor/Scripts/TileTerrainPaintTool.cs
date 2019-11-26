@@ -13,6 +13,10 @@ namespace Thijs.Framework.MarchingSquares
 
         private static void OnSceneGUI(SceneView sceneView)
         {
+            // Only enable this tool when we are in 2D mode
+            if (!sceneView.orthographic)
+                return;
+
         }
     }
 }
