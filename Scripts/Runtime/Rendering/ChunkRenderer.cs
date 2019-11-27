@@ -13,13 +13,13 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private MeshFilter meshFilter;
         private Mesh sharedMesh;
         
-        //New
         private NativeList<float2> jobVertices;
-        private List<Vector3> vertexCache;
-        private List<int> triangleCache;
+        private List<Vector3> vertices;
+        private List<int> triangles;
         
         private NativeList<int> triangleIndices;
         private NativeList<int> triangleLengths;
+        private VertexCache vertexCache;
 
         private TileTerrain currentGrid;
         private JobHandle? currentJobHandle;
@@ -28,8 +28,8 @@ namespace Thijs.Framework.MarchingSquares
         {
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
             meshFilter = gameObject.AddComponent<MeshFilter>();
-            vertexCache = new List<Vector3>(VoxelUtility.NATIVE_CACHE_SIZE);
-            triangleCache = new List<int>(VoxelUtility.NATIVE_CACHE_SIZE);
+            vertices = new List<Vector3>(VoxelUtility.NATIVE_CACHE_SIZE);
+            triangles = new List<int>(VoxelUtility.NATIVE_CACHE_SIZE);
         }
 
         private void OnEnable()
@@ -53,6 +53,9 @@ namespace Thijs.Framework.MarchingSquares
                 triangleIndices.Dispose();
                 triangleLengths.Dispose();
             }
+            
+            if (vertexCache.IsCreated)
+                vertexCache.Dispose();
 
             DestroyImmediate(sharedMesh);
         }
@@ -64,9 +67,23 @@ namespace Thijs.Framework.MarchingSquares
             triangleLengths.Clear();
         }
 
+        private void InitializeVertexCache(TileTerrain grid)
+        {
+            if (!vertexCache.IsCreated)
+            {
+                vertexCache = new VertexCache(grid.ChunkResolution);
+            }
+            else if (vertexCache.resolution != grid.ChunkResolution)
+            {
+                vertexCache.Dispose();
+                vertexCache = new VertexCache(grid.ChunkResolution);
+            }
+        }
+
         public JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency)
         {
             currentGrid = grid;
+            InitializeVertexCache(currentGrid);
 
             ClearJobData();
             SinglePassGenerateMeshDataJob singlePassMeshGenJob = new SinglePassGenerateMeshDataJob()
@@ -81,6 +98,8 @@ namespace Thijs.Framework.MarchingSquares
                 vertices = jobVertices,
                 triangleIndices = triangleIndices,
                 triangleLengths = triangleLengths,
+                
+                cache = vertexCache,
             };
             currentJobHandle = singlePassMeshGenJob.Schedule(dependency);
             return currentJobHandle.Value;
@@ -101,7 +120,7 @@ namespace Thijs.Framework.MarchingSquares
             sharedMesh.subMeshCount = subMeshCount;
 
             WriteJobVerticesToVertexCache();
-            sharedMesh.SetVertices(vertexCache);
+            sharedMesh.SetVertices(vertices);
             
             int offset = 0;
             int currentSubMesh = 0;
@@ -111,7 +130,7 @@ namespace Thijs.Framework.MarchingSquares
                 if (length != 0)
                 {
                     WriteJobTrianglesToTriangleCache(offset, length);
-                    meshFilter.sharedMesh.SetTriangles(triangleCache, currentSubMesh);
+                    meshFilter.sharedMesh.SetTriangles(triangles, currentSubMesh);
                     
                     if (currentGrid.TileTemplate != null)
                         materials[currentSubMesh] = currentGrid.TileTemplate.GetMaterial((FillType) (i + 1));
@@ -126,20 +145,20 @@ namespace Thijs.Framework.MarchingSquares
 
         private void WriteJobVerticesToVertexCache()
         {
-            vertexCache.Clear();
+            vertices.Clear();
             for (int i = 0; i < jobVertices.Length; i++)
             {
                 float2 jobVertex = jobVertices[i];
-                vertexCache.Add(new Vector3(jobVertex.x, jobVertex.y));
+                vertices.Add(new Vector3(jobVertex.x, jobVertex.y));
             }
         }
 
         private void WriteJobTrianglesToTriangleCache(int offset, int length)
         {
-            triangleCache.Clear();
+            triangles.Clear();
             for (int i = offset; i < offset + length; i++)
             {
-                triangleCache.Add(triangleIndices[i]);
+                triangles.Add(triangleIndices[i]);
             }
         }
 

@@ -19,9 +19,11 @@ namespace Thijs.Framework.MarchingSquares
         public NativeList<int> triangleIndices;
         public NativeList<int> triangleLengths;
 
+        public VertexCache cache;
+
         public void Execute()
         {
-            VertexCache cache = new VertexCache(resolution);
+            //VertexCache cache = new VertexCache(resolution);
 
             int previousLength = 0;
             for (int i = 0; i < generateForFillTypes.Length; i++)
@@ -32,7 +34,7 @@ namespace Thijs.Framework.MarchingSquares
                 triangleLengths.Add(length);
                 previousLength = length;
             }
-            cache.Dispose();
+            //cache.Dispose();
         }
 
         private void Execute(FillType fillType, VertexCache cache)

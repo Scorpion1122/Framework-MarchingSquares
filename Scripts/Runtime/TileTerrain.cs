@@ -192,13 +192,18 @@ namespace Thijs.Framework.MarchingSquares
             };
             jobHandle = modifyOffsetsJob.Schedule(voxelCount, 64, jobHandle);
 
+            // In principle all dependency jobs should be able to execute at the same time
+            JobHandle dependencyGroupHandle = new JobHandle();
             for (int i = 0; i < chunkData.dependencies.Count; i++)
             {
                 JobHandle dependencyHandle = chunkData.dependencies[i].ScheduleChunkJob(this, chunkData, jobHandle);
-                jobHandle = JobHandle.CombineDependencies(dependencyHandle, jobHandle);
+                if (i == 0)
+                    dependencyGroupHandle = dependencyHandle;
+                else
+                    dependencyGroupHandle = JobHandle.CombineDependencies(dependencyHandle, dependencyGroupHandle);
             }
 
-            chunkData.jobHandle = jobHandle;
+            chunkData.jobHandle = dependencyGroupHandle;
         }
 
         private void CompleteChunkJobs(ChunkData chunkData)
