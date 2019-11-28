@@ -1,0 +1,6 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:ue="UnityEditor.Experimental.UIElements">
+    <ui:VisualElement name="circle">
+    </ui:VisualElement>
+    <ui:VisualElement name="square">
+    </ui:VisualElement>
+</UXML>

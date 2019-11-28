@@ -1,5 +1,4 @@
-﻿using System;
-using Thijs.Core.PropertyAttributes;
+﻿using Thijs.Core.PropertyAttributes;
 using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
@@ -11,6 +10,8 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private Material[] materials;
         [SerializeField] private PhysicsMaterial2D[] physicsMaterials;
         [SerializeField, Layer] private int[] layers;
+
+        public string[] Names => names;
 
         public Material GetMaterial(FillType fillType)
         {

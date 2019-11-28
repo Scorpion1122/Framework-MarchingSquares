@@ -1,0 +1,31 @@
+.TileTerrainToolbar {
+  top: 24;
+}
+
+#canvas {
+  width: auto;
+  height: auto;
+}
+  
+#toolbar {
+  position: absolute;
+  flex-direction: column;
+  justify-content: center;
+}
+  
+  #options {
+    flex-direction: row;
+  }
+  
+  #option-shape {
+    width: 65;
+  }
+    
+#option-size {
+     width: 35;
+   }
+
+#option-type {
+  width: 65;
+}
+  

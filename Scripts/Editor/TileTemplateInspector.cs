@@ -18,14 +18,14 @@ namespace Thijs.Framework.MarchingSquares
 
         public override void OnInspectorGUI()
         {
-            DrawPropertyArray(serializedObject.FindProperty("names"));
+            DrawPropertyArray(serializedObject.FindProperty("names"), true);
             DrawPropertyArray(serializedObject.FindProperty("materials"));
             DrawPropertyArray(serializedObject.FindProperty("physicsMaterials"));
             DrawPropertyArray(serializedObject.FindProperty("layers"));
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawPropertyArray(SerializedProperty property)
+        private void DrawPropertyArray(SerializedProperty property, bool includeFirst = false)
         {
             property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, property.displayName);
             if (!property.isExpanded)
@@ -35,7 +35,8 @@ namespace Thijs.Framework.MarchingSquares
                 property.arraySize = enumNames.Length;
 
             EditorGUI.indentLevel = EditorGUI.indentLevel + 1;
-            for (int i = 1; i < property.arraySize; i++)
+            int index = (includeFirst) ? 0 : 1;
+            for (int i = index; i < property.arraySize; i++)
             {
                 SerializedProperty itemProperty = property.GetArrayElementAtIndex(i);
                 string label = tileTemplate.GetName((FillType) i);

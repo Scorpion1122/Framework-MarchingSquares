@@ -12,6 +12,6 @@ namespace Thijs.Framework.MarchingSquares
             gameObject.AddComponent<TileTerrain>();
             gameObject.AddComponent<TileTerrainRenderer>();
             gameObject.AddComponent<TileTerrainCollider>();
-        }
+        } 
     }
 }
