@@ -27,12 +27,12 @@ namespace Thijs.Framework.MarchingSquares
             return new float2(index.x * chunkSize, index.y * chunkSize);
         }
 
-        public static int PositionToChunkIndex(float2 position, int gridResolution, float chunkSize)
+        public static int2 PositionToChunkIndex(float2 position, float chunkSize)
         {
             int x = (int) math.floor(position.x / chunkSize);
             int y = (int) math.floor(position.y / chunkSize);
             int2 index2 = new int2(x, y);
-            return Index2ToIndex(index2, gridResolution);
+            return index2;
         }
 
         public static bool IsChunkIndexValid(int index, int gridResolution)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -30,6 +31,7 @@ namespace Thijs.Framework.MarchingSquares
         public float TileSize => tileSize;
         public int ChunkResolution => chunkResolution + 1;
         public int TilesPerChunk => ChunkResolution * ChunkResolution;
+        public float ChunkSize => chunkSize;
         public TileTemplate TileTemplate => tileTemplate;
         public NativeArray<FillType> SupportedFillTypes => supportedFillTypes;
 
@@ -99,6 +101,8 @@ namespace Thijs.Framework.MarchingSquares
 
         public void UnloadChunk(int2 chunkIndex)
         {
+            if (!IsChunkActive((chunkIndex)))
+                return;
             DisposeOfChunk(chunks[chunkIndex]);
             chunks.Remove(chunkIndex);
         }
@@ -113,6 +117,11 @@ namespace Thijs.Framework.MarchingSquares
                 }
             }
             chunkData.Dispose();
+        }
+
+        public bool IsChunkActive(int2 chunkIndex)
+        {
+            return chunks.ContainsKey(chunkIndex);
         }
         #endregion
 
@@ -258,6 +267,8 @@ namespace Thijs.Framework.MarchingSquares
 
         private void OnDrawGizmos()
         {
+            OnDrawGizmosSelected();
+            
             if (chunks == null || !drawGizmos)
                 return;
 
