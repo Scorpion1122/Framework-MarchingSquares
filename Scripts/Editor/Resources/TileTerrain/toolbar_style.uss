@@ -16,7 +16,11 @@
   #options {
     flex-direction: row;
   }
-  
+    
+#option-type {
+  width: 65;
+}
+    
   #option-shape {
     width: 65;
   }
@@ -25,7 +29,7 @@
      width: 35;
    }
 
-#option-type {
+#option-fill {
   width: 65;
 }
   

@@ -6,10 +6,10 @@ namespace Thijs.Framework.MarchingSquares
     [CreateAssetMenu(fileName = "Tile Template", menuName = "Database/Voxel/Tile Template")]
     public class TileTemplate : ScriptableObject
     {
-        [SerializeField] private string[] names;
-        [SerializeField] private Material[] materials;
-        [SerializeField] private PhysicsMaterial2D[] physicsMaterials;
-        [SerializeField, Layer] private int[] layers;
+        [SerializeField] private string[] names = {};
+        [SerializeField] private Material[] materials = {};
+        [SerializeField] private PhysicsMaterial2D[] physicsMaterials = {};
+        [SerializeField, Layer] private int[] layers = {};
 
         public string[] Names => names;
 

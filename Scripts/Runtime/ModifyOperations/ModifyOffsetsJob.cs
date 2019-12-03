@@ -1,4 +1,5 @@
-﻿using Unity.Burst;
+﻿using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -37,6 +38,21 @@ namespace Thijs.Framework.MarchingSquares
             }
 
             UpdateOffsetsForNeighbourChunk(index);
+        }
+        
+        private bool CanChangeOffsets(FillType currentFillType, FillType otherFillType, ModifierType modifierType)
+        {
+            switch (modifierType)
+            {
+                case ModifierType.Always:
+                    return true;
+                case ModifierType.Replace:
+                    return currentFillType != otherFillType && otherFillType != FillType.None;
+                case ModifierType.Fill:
+                    return currentFillType == otherFillType || otherFillType == FillType.None || currentFillType == FillType.None;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(modifierType), modifierType, null);
+            }
         }
 
         private bool ShouldZeroOutOffsets(int index)
@@ -92,17 +108,20 @@ namespace Thijs.Framework.MarchingSquares
             float intersectX = math.sqrt(radius2 - math.pow(difference.y, 2));
             float intersectY = math.sqrt(radius2 - math.pow(difference.x, 2));
 
+            bool canModifyY = CanChangeOffsets(currentFillType, topFillType, modifier.modifierType);
+            bool canModifyX = CanChangeOffsets(currentFillType, rightFillType, modifier.modifierType);
+
             if (topFillType == currentFillType)
             {
                 offset.y = 0f;
             }
-            else if (withinCircle && !topWithinCircle)
+            else if (canModifyY && withinCircle && !topWithinCircle)
             {
                 float newOffset = intersectY - difference.y;
                 newOffset = math.clamp(newOffset, 0, size);
                 offset.y = math.max(newOffset, offset.y);
             }
-            else if (!withinCircle && topWithinCircle)
+            else if (canModifyY && !withinCircle && topWithinCircle)
             {
                 float newOffset = (intersectY + difference.y) * -1;
                 newOffset = math.clamp(newOffset, 0, size);
@@ -114,13 +133,13 @@ namespace Thijs.Framework.MarchingSquares
             {
                 offset.x = 0;
             }
-            else if (withinCircle && !rightWithinCircle)
+            else if (canModifyX && withinCircle && !rightWithinCircle)
             {
                 float newOffset = intersectX - difference.x;
                 newOffset = math.clamp(newOffset, 0, size);
                 offset.x = math.max(newOffset, offset.x);
             }
-            else if (!withinCircle && rightWithinCircle)
+            else if (canModifyX && !withinCircle && rightWithinCircle)
             {
                 float newOffset = (intersectX + difference.x) * -1;
                 newOffset = math.clamp(newOffset, 0, size);
@@ -150,6 +169,8 @@ namespace Thijs.Framework.MarchingSquares
                 FillType rightFillType = VoxelUtility.GetNeightbour(fillTypes, index + 1);
                 float2 rightPosition = VoxelUtility.IndexToPosition(index + 1, resolution, size);
                 bool rightWithinLength = rightPosition.x >= min.x && rightPosition.x <= max.x;
+                
+                bool canModifyX = CanChangeOffsets(currentFillType, rightFillType, modifier.modifierType);
 
                 //Both are of the same type, so zero it out
                 if (currentFillType == rightFillType)
@@ -157,14 +178,14 @@ namespace Thijs.Framework.MarchingSquares
                     offset.x = 0f;
                 }
                 //Current within modifier, right not in modifier
-                else if (withinLength && !rightWithinLength)
+                else if (canModifyX && withinLength && !rightWithinLength)
                 {
                     float newOffset = max.x - position.x;
                     newOffset = math.clamp(newOffset, 0f, size);
                     offset.x = math.max(offset.x, newOffset);
                 }
                 //Current outside modifier, right inside modifier
-                else if (!withinLength && rightWithinLength)
+                else if (canModifyX && !withinLength && rightWithinLength)
                 {
                     float newOffset = min.x - position.x;
                     newOffset = math.clamp(newOffset, 0f, size);
@@ -178,6 +199,8 @@ namespace Thijs.Framework.MarchingSquares
                 FillType topFillType = VoxelUtility.GetNeightbour(fillTypes, index + resolution);
                 float2 topPosition = VoxelUtility.IndexToPosition(index + resolution, resolution, size);
                 bool topWithinHeight = topPosition.y >= min.y && topPosition.y <= max.y;
+                
+                bool canModifyY = CanChangeOffsets(currentFillType, topFillType, modifier.modifierType);
 
                 //Both are of the same type, so zero it out
                 if (currentFillType == topFillType)
@@ -185,14 +208,14 @@ namespace Thijs.Framework.MarchingSquares
                     offset.y = 0f;
                 }
                 //Current within modifier, top not in modifier
-                else if (withinHeight && !topWithinHeight)
+                else if (canModifyY && withinHeight && !topWithinHeight)
                 {
                     float newOffset = max.y - position.y;
                     newOffset = math.clamp(newOffset, 0f, size);
                     offset.y = math.max(offset.y, newOffset);
                 }
                 //Current outside modifier, top inside modifier
-                else if (!withinHeight && topWithinHeight)
+                else if (canModifyY && !withinHeight && topWithinHeight)
                 {
                     float newOffset = min.y - position.y;
                     newOffset = math.clamp(newOffset, 0f, size);

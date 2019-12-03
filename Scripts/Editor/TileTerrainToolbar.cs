@@ -11,34 +11,43 @@ namespace Thijs.Framework.MarchingSquares
         public override string StyleSheetPath => "TileTerrain/toolbar_style";
         public override string TemplatePath => "TileTerrain/toolbar_template";
 
-        private TileTerrain terrain;
+        [ViewChild("option-type")] private EnumField optionType = null;
+        [ViewChild("options")] private VisualElement optionsContainer = null;
+        [ViewChild("option-shape")] private EnumField optionShape = null;
+        [ViewChild("option-size")] private FloatField optionSize = null;
+        private PopupField<string> optionFill;
 
-        [ViewChild("options")] private VisualElement optionsContainer;
-        [ViewChild("option-shape")] private EnumField optionShape;
-        private PopupField<string> optionType;
-
-        private ModifierShape selectedShape;
-        private FillType selectedFillType;
+        public TileTerrain Terrain { get; private set; }
+        public ModifierType SelectedType { get; private set; }
+        public ModifierShape SelectedShape { get; private set; }
+        public FillType SelectedFillType { get; private set; }
+        public float SelectedSize { get; private set; }
 
         public TileTerrainToolbar() : base()
         {
-            optionShape.Init(selectedShape);
-            optionShape.RegisterCallback<ChangeEvent<Enum>>((evt) => { selectedShape = (ModifierShape)evt.newValue; });
+            optionShape.Init(SelectedShape);
+            optionShape.RegisterCallback<ChangeEvent<Enum>>((evt) => { SelectedShape = (ModifierShape)evt.newValue; });
+            
+            optionType.Init(SelectedType);
+            optionType.RegisterCallback<ChangeEvent<Enum>>((evt) => { SelectedType = (ModifierType)evt.newValue; });
+            
+            optionSize.RegisterCallback<ChangeEvent<float>>((evt) => { SelectedSize = evt.newValue; });
+            SelectedSize = optionSize.value;
         }
 
         public void SetActiveTerrain(TileTerrain newTerrain)
         {
-            if (terrain == newTerrain)
+            if (Terrain == newTerrain)
                 return;
-            terrain = newTerrain;
+            Terrain = newTerrain;
 
-            if (terrain == null)
+            if (Terrain == null)
             {
                 SetEnabled(false);
                 return;
             }
             
-            TileTemplate template = terrain.TileTemplate;
+            TileTemplate template = Terrain.TileTemplate;
             if (template == null)
             {
                 SetEnabled(false);
@@ -52,19 +61,19 @@ namespace Thijs.Framework.MarchingSquares
         private void UpdateTypeOptions(TileTemplate template)
         {
             //Have not found a way yet to reinitialize the choises
-            if (optionType != null)
-                optionsContainer.Remove(optionType);
+            if (optionFill != null)
+                optionsContainer.Remove(optionFill);
             
             if (template == null)
                 return;
             
-            optionType = new PopupField<string>(null, template.Names.ToList(), 0);
-            optionType.name = "option-type";
-            optionsContainer.Add(optionType);
+            optionFill = new PopupField<string>(null, template.Names.ToList(), 0);
+            optionType.name = "option-fill";
+            optionsContainer.Add(optionFill);
             
-            optionType.RegisterCallback<ChangeEvent<string>>((evt) =>
+            optionFill.RegisterCallback<ChangeEvent<string>>((evt) =>
                 {
-                    selectedFillType = (FillType) optionType.index;
+                    SelectedFillType = (FillType) optionFill.index;
                 });
         }
     }

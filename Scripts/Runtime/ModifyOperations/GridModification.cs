@@ -6,6 +6,7 @@ namespace Thijs.Framework.MarchingSquares
     public struct GridModification
     {
         public ModifierShape ModifierShape;
+        public ModifierType modifierType;
         public FillType setFilltype;
         public float2 position;
         public float size;

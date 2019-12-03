@@ -23,7 +23,6 @@ namespace Thijs.Framework.MarchingSquares
         private float tileSize = 1f;
 
         [FormerlySerializedAs("materialTemplate")] [SerializeField] private TileTemplate tileTemplate = null;
-        [SerializeField] private WorldGeneration worldGenerationTest = null;
 
         [Header("Debug")] 
         [SerializeField] private bool drawGizmos = false;

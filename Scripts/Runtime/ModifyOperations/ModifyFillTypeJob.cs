@@ -1,4 +1,5 @@
-﻿using Unity.Burst;
+﻿using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -20,6 +21,12 @@ namespace Thijs.Framework.MarchingSquares
             for (int i = 0; i < modifiers.Length; i++)
             {
                 GridModification modifier = modifiers[i];
+                if (modifier.setFilltype == fillType)
+                    continue;
+
+                if (!CanChangeFillType(fillType, modifier.modifierType))
+                    continue;
+                
                 switch (modifier.ModifierShape)
                 {
                     case ModifierShape.Circle:
@@ -32,6 +39,21 @@ namespace Thijs.Framework.MarchingSquares
             }
 
             fillTypes[index] = fillType;
+        }
+
+        private bool CanChangeFillType(FillType currentFillType, ModifierType modifierType)
+        {
+            switch (modifierType)
+            {
+                case ModifierType.Always:
+                    return true;
+                case ModifierType.Replace:
+                    return currentFillType != FillType.None;
+                case ModifierType.Fill:
+                    return currentFillType == FillType.None;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(modifierType), modifierType, null);
+            }
         }
 
         private FillType RunCircleModifier(FillType fillType, float2 voxelPosition, GridModification modifier)

@@ -1,10 +1,12 @@
 using UnityEditor;
+using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
     public static class TileTerrainEditor
     {
         private static TileTerrainToolbar toolbar;
+        private static TilePainterCursor cursor;
         
         [InitializeOnLoadMethod]
         private static void InitializeTileTerrainPainter()
@@ -28,8 +30,11 @@ namespace Thijs.Framework.MarchingSquares
             {
                 toolbar = new TileTerrainToolbar();
                 sceneView.rootVisualElement.Add(toolbar);
+                cursor = new TilePainterCursor();
                 OnSelectionChanged();
             }
+            
+            cursor.DrawCursor(toolbar);
         }
     }
 }

@@ -1,6 +1,7 @@
 <UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:ue="UnityEditor.Experimental.UIElements">
     <ui:VisualElement name="canvas">
         <ui:VisualElement name="options">
+                <ue:EnumField name="option-type" include-obsolete-values="false"/>
                 <ue:FloatField name="option-size" value="1" />
                 <ue:EnumField name="option-shape" include-obsolete-values="false"/>
         </ui:VisualElement>
