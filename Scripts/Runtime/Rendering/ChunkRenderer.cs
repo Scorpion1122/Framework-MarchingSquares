@@ -12,11 +12,13 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private MeshFilter meshFilter;
         private Mesh sharedMesh;
-        
+
+        public MeshRenderer MeshRenderer => meshRenderer;
+
         private NativeList<float2> jobVertices;
         private List<Vector3> vertices;
         private List<int> triangles;
-        
+
         private NativeList<int> triangleIndices;
         private NativeList<int> triangleLengths;
         private VertexCache vertexCache;
@@ -53,7 +55,7 @@ namespace Thijs.Framework.MarchingSquares
                 triangleIndices.Dispose();
                 triangleLengths.Dispose();
             }
-            
+
             if (vertexCache.IsCreated)
                 vertexCache.Dispose();
 
@@ -91,14 +93,14 @@ namespace Thijs.Framework.MarchingSquares
                 resolution = currentGrid.ChunkResolution,
                 size = currentGrid.TileSize,
                 generateForFillTypes = currentGrid.SupportedFillTypes,
-                
+
                 fillTypes = chunkData.fillTypes,
                 offsets = chunkData.offsets,
-                
+
                 vertices = jobVertices,
                 triangleIndices = triangleIndices,
                 triangleLengths = triangleLengths,
-                
+
                 cache = vertexCache,
             };
             currentJobHandle = singlePassMeshGenJob.Schedule(dependency);
@@ -121,7 +123,7 @@ namespace Thijs.Framework.MarchingSquares
 
             WriteJobVerticesToVertexCache();
             sharedMesh.SetVertices(vertices);
-            
+
             int offset = 0;
             int currentSubMesh = 0;
             for (int i = 0; i < triangleLengths.Length; i++)
@@ -131,7 +133,7 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     WriteJobTrianglesToTriangleCache(offset, length);
                     meshFilter.sharedMesh.SetTriangles(triangles, currentSubMesh);
-                    
+
                     if (currentGrid.TileTemplate != null)
                         materials[currentSubMesh] = currentGrid.TileTemplate.GetMaterial((FillType) (i + 1));
                     currentSubMesh++;
