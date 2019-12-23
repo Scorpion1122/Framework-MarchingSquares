@@ -126,8 +126,11 @@ namespace Thijs.Framework.MarchingSquares
             {
                 float newOffset = intersectY - difference.y;
                 newOffset = math.clamp(newOffset, 0, size);
-                offset.y = math.max(newOffset, offset.y);
-                normalY = math.normalize((position + new float2(0, offset.y)) - modifier.position);
+                if (newOffset > offset.y)
+                {
+                    offset.y = newOffset;
+                    normalY = math.normalize((position + new float2(0, offset.y)) - modifier.position);
+                }
             }
             else if (canModifyY && !withinCircle && topWithinCircle)
             {
@@ -149,8 +152,11 @@ namespace Thijs.Framework.MarchingSquares
             {
                 float newOffset = intersectX - difference.x;
                 newOffset = math.clamp(newOffset, 0, size);
-                offset.x = math.max(newOffset, offset.x);
-                normalX = math.normalize((position + new float2(offset.x, 0)) - modifier.position);
+                if (newOffset > offset.x)
+                {
+                    offset.x = newOffset;
+                    normalX = math.normalize((position + new float2(offset.x, 0)) - modifier.position);
+                }
             }
             else if (canModifyX && !withinCircle && rightWithinCircle)
             {
@@ -203,8 +209,11 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     float newOffset = max.x - position.x;
                     newOffset = math.clamp(newOffset, 0f, size);
-                    offset.x = math.max(offset.x, newOffset);
-                    normalX = new float2(1, 0f);
+                    if (newOffset > offset.x)
+                    {
+                        offset.x = newOffset;
+                        normalX = new float2(1, 0f);
+                    }
                 }
                 //Current outside modifier, right inside modifier
                 else if (canModifyX && !withinLength && rightWithinLength)
@@ -238,8 +247,11 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     float newOffset = max.y - position.y;
                     newOffset = math.clamp(newOffset, 0f, size);
-                    offset.y = math.max(offset.y, newOffset);
-                    normalY = new float2(0, 1);
+                    if (newOffset > offset.y)
+                    {
+                        offset.y = newOffset;
+                        normalY = new float2(0, 1);
+                    }
                 }
                 //Current outside modifier, top inside modifier
                 else if (canModifyY && !withinHeight && topWithinHeight)
