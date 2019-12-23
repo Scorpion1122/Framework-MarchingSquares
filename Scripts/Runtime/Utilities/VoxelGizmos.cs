@@ -19,15 +19,25 @@ namespace Thijs.Framework.MarchingSquares
         {
             FillType fillType = chunkData.fillTypes[index];
             float2 offset = chunkData.offsets[index];
+            float2 normalX = chunkData.normalsX[index];
+            float2 normalY = chunkData.normalsY[index];
 
             Gizmos.color = GetColor(fillType);
 
             float2 position = VoxelUtility.IndexToPosition(index, resolution, size) + chunkData.origin;
 
             Vector3 worldPosition = transform.TransformPoint(new Vector3(position.x, position.y, 0));
+            Vector3 offsetPositionX = worldPosition + offset.x * size * transform.right;
+            Vector3 offsetPositionY = worldPosition + offset.y * size * transform.up;
+
             Gizmos.DrawSphere(worldPosition, size * 0.1f);
-            Gizmos.DrawLine(worldPosition, worldPosition + offset.y * size * transform.up);
-            Gizmos.DrawLine(worldPosition, worldPosition + offset.x * size * transform.right);
+            Gizmos.DrawLine(worldPosition, offsetPositionX);
+            Gizmos.DrawLine(worldPosition, offsetPositionY);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(offsetPositionX, offsetPositionX + new Vector3(normalX.x, normalX.y));
+            Gizmos.DrawLine(offsetPositionY, offsetPositionY + new Vector3(normalY.x, normalY.y));
+
             Gizmos.color = Color.white;
         }
 

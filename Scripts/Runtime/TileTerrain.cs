@@ -22,6 +22,8 @@ namespace Thijs.Framework.MarchingSquares
 
         [SerializeField]
         private float tileSize = 1f;
+        [SerializeField]
+        private float sharpnessLimit = 135;
 
         [FormerlySerializedAs("materialTemplate")] [SerializeField] private TileTemplate tileTemplate = null;
 
@@ -32,6 +34,7 @@ namespace Thijs.Framework.MarchingSquares
         public int ChunkResolution => chunkResolution + 1;
         public int TilesPerChunk => ChunkResolution * ChunkResolution;
         public float ChunkSize => chunkSize;
+        public float SharpnessLimit => sharpnessLimit;
         public TileTemplate TileTemplate => tileTemplate;
         public NativeArray<FillType> SupportedFillTypes => supportedFillTypes;
 
@@ -197,6 +200,8 @@ namespace Thijs.Framework.MarchingSquares
                 modifiers = chunkData.modifiers,
                 fillTypes = chunkData.fillTypes,
                 offsets = chunkData.offsets,
+                normalsX = chunkData.normalsX,
+                normalsY = chunkData.normalsY,
             };
             jobHandle = modifyOffsetsJob.Schedule(voxelCount, 64, jobHandle);
 

@@ -14,12 +14,16 @@ namespace Thijs.Framework.MarchingSquares
         [ReadOnly] public NativeList<GridModification> modifiers;
         [ReadOnly] public NativeArray<FillType> fillTypes;
         public NativeArray<float2> offsets;
+        public NativeArray<float2> normalsX;
+        public NativeArray<float2> normalsY;
 
         public void Execute(int index)
         {
             if (ShouldZeroOutOffsets(index))
             {
                 offsets[index] = float2.zero;
+                normalsX[index] = float2.zero;
+                normalsY[index] = float2.zero;
                 return;
             }
 
@@ -90,6 +94,8 @@ namespace Thijs.Framework.MarchingSquares
         private void RunCircleModifier(int index, GridModification modifier)
         {
             float2 offset = offsets[index];
+            float2 normalX = normalsX[index];
+            float2 normalY = normalsY[index];
 
             float2 position = VoxelUtility.IndexToPosition(index, resolution, size);
             float2 topPosition = VoxelUtility.IndexToPosition(index + resolution, resolution, size);
@@ -114,45 +120,59 @@ namespace Thijs.Framework.MarchingSquares
             if (topFillType == currentFillType)
             {
                 offset.y = 0f;
+                normalY = float2.zero;
             }
             else if (canModifyY && withinCircle && !topWithinCircle)
             {
                 float newOffset = intersectY - difference.y;
                 newOffset = math.clamp(newOffset, 0, size);
                 offset.y = math.max(newOffset, offset.y);
+                normalY = math.normalize((position + new float2(0, offset.y)) - modifier.position);
             }
             else if (canModifyY && !withinCircle && topWithinCircle)
             {
                 float newOffset = (intersectY + difference.y) * -1;
                 newOffset = math.clamp(newOffset, 0, size);
                 if (offset.y == 0 || offset.y > newOffset)
+                {
                     offset.y = newOffset;
+                    normalY = math.normalize((position + new float2(0, offset.y)) - modifier.position);
+                }
             }
 
             if (rightFillType == currentFillType)
             {
                 offset.x = 0;
+                normalX = float2.zero;
             }
             else if (canModifyX && withinCircle && !rightWithinCircle)
             {
                 float newOffset = intersectX - difference.x;
                 newOffset = math.clamp(newOffset, 0, size);
                 offset.x = math.max(newOffset, offset.x);
+                normalX = math.normalize((position + new float2(offset.x, 0)) - modifier.position);
             }
             else if (canModifyX && !withinCircle && rightWithinCircle)
             {
                 float newOffset = (intersectX + difference.x) * -1;
                 newOffset = math.clamp(newOffset, 0, size);
                 if (offset.x == 0 || offset.x > newOffset)
+                {
                     offset.x = newOffset;
+                    normalX = math.normalize((position + new float2(offset.x, 0)) - modifier.position);
+                }
             }
 
             offsets[index] = offset;
+            normalsX[index] = normalX;
+            normalsY[index] = normalY;
         }
 
         private void RunSquareModifier(int index, GridModification modifier)
         {
             float2 offset = offsets[index];
+            float2 normalX = normalsX[index];
+            float2 normalY = normalsY[index];
 
             float2 min = new float2(modifier.position.x - modifier.size, modifier.position.y - modifier.size);
             float2 max = new float2(modifier.position.x + modifier.size, modifier.position.y + modifier.size);
@@ -176,6 +196,7 @@ namespace Thijs.Framework.MarchingSquares
                 if (currentFillType == rightFillType)
                 {
                     offset.x = 0f;
+                    normalX = float2.zero;
                 }
                 //Current within modifier, right not in modifier
                 else if (canModifyX && withinLength && !rightWithinLength)
@@ -183,6 +204,7 @@ namespace Thijs.Framework.MarchingSquares
                     float newOffset = max.x - position.x;
                     newOffset = math.clamp(newOffset, 0f, size);
                     offset.x = math.max(offset.x, newOffset);
+                    normalX = new float2(1, 0f);
                 }
                 //Current outside modifier, right inside modifier
                 else if (canModifyX && !withinLength && rightWithinLength)
@@ -190,7 +212,10 @@ namespace Thijs.Framework.MarchingSquares
                     float newOffset = min.x - position.x;
                     newOffset = math.clamp(newOffset, 0f, size);
                     if (offset.x == 0f || offset.x > newOffset)
+                    {
                         offset.x = newOffset;
+                        normalX = new float2(-1, 0f);
+                    }
                 }
             }
 
@@ -206,6 +231,7 @@ namespace Thijs.Framework.MarchingSquares
                 if (currentFillType == topFillType)
                 {
                     offset.y = 0f;
+                    normalY = float2.zero;
                 }
                 //Current within modifier, top not in modifier
                 else if (canModifyY && withinHeight && !topWithinHeight)
@@ -213,6 +239,7 @@ namespace Thijs.Framework.MarchingSquares
                     float newOffset = max.y - position.y;
                     newOffset = math.clamp(newOffset, 0f, size);
                     offset.y = math.max(offset.y, newOffset);
+                    normalY = new float2(0, 1);
                 }
                 //Current outside modifier, top inside modifier
                 else if (canModifyY && !withinHeight && topWithinHeight)
@@ -220,11 +247,16 @@ namespace Thijs.Framework.MarchingSquares
                     float newOffset = min.y - position.y;
                     newOffset = math.clamp(newOffset, 0f, size);
                     if (offset.y == 0f || offset.y > newOffset)
+                    {
                         offset.y = newOffset;
+                        normalY = new float2(0, -1);
+                    }
                 }
             }
 
             offsets[index] = offset;
+            normalsX[index] = normalX;
+            normalsY[index] = normalY;
         }
     }
 }

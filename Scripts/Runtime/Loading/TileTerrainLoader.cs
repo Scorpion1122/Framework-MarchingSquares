@@ -35,8 +35,9 @@ namespace Thijs.Framework.MarchingSquares.Loading
             CameraUtility.GetActiveCameras(ref cameras);
             
             chunks.Clear();
-            for (int i = 0; i < cameras.Count; i++)
-                CameraUtility.AddChunkRangeInCameraView(cameras[i], padding, TileTerrain.ChunkSize, ref chunks);
+            //for (int i = 0; i < cameras.Count; i++)
+            //    CameraUtility.AddChunkRangeInCameraView(cameras[i], padding, TileTerrain.ChunkSize, ref chunks);
+            chunks.Add(int2.zero);
 
             for (int i = 0; i < chunks.Count; i++)
             {

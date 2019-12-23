@@ -94,6 +94,10 @@ namespace Thijs.Framework.MarchingSquares
                 
                 fillTypes = chunkData.fillTypes,
                 offsets = chunkData.offsets,
+                normalsX = chunkData.normalsX,
+                normalsY = chunkData.normalsY,
+
+                sharpnessLimit = math.cos(math.radians(grid.SharpnessLimit)),
                 
                 vertices = jobVertices,
                 triangleIndices = triangleIndices,
