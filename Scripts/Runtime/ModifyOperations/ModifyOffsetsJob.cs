@@ -212,7 +212,7 @@ namespace Thijs.Framework.MarchingSquares
                     if (newOffset > offset.x)
                     {
                         offset.x = newOffset;
-                        normalX = new float2(1, 0f);
+                        normalX = new float2(1, 0f) * GetNormalSign(modifier.setFilltype);
                     }
                 }
                 //Current outside modifier, right inside modifier
@@ -223,7 +223,7 @@ namespace Thijs.Framework.MarchingSquares
                     if (offset.x == 0f || offset.x > newOffset)
                     {
                         offset.x = newOffset;
-                        normalX = new float2(-1, 0f);
+                        normalX = new float2(-1, 0f) * GetNormalSign(modifier.setFilltype);
                     }
                 }
             }
@@ -250,7 +250,7 @@ namespace Thijs.Framework.MarchingSquares
                     if (newOffset > offset.y)
                     {
                         offset.y = newOffset;
-                        normalY = new float2(0, 1);
+                        normalY = new float2(0, 1) * GetNormalSign(modifier.setFilltype);
                     }
                 }
                 //Current outside modifier, top inside modifier
@@ -261,7 +261,7 @@ namespace Thijs.Framework.MarchingSquares
                     if (offset.y == 0f || offset.y > newOffset)
                     {
                         offset.y = newOffset;
-                        normalY = new float2(0, -1);
+                        normalY = new float2(0, -1) * GetNormalSign(modifier.setFilltype);
                     }
                 }
             }
@@ -269,6 +269,11 @@ namespace Thijs.Framework.MarchingSquares
             offsets[index] = offset;
             normalsX[index] = normalX;
             normalsY[index] = normalY;
+        }
+
+        private int GetNormalSign(FillType type)
+        {
+            return (type == FillType.None) ? -1 : 1;
         }
     }
 }
