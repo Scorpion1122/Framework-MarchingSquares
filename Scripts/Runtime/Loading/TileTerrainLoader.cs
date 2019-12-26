@@ -43,7 +43,9 @@ namespace Thijs.Framework.MarchingSquares.Loading
             for (int i = 0; i < chunks.Count; i++)
             {
                 if (!TileTerrain.IsChunkActive(chunks[i]))
+                {
                     TileTerrain.LoadChunk(chunks[i]);
+                }
             }
 
             for (int i = 0; i < loadedChunks.Count; i++)

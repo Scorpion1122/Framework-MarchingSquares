@@ -78,6 +78,7 @@ namespace Thijs.Framework.MarchingSquares
             foreach (var chunkData in chunks)
             {
                 OnChunkDestroyed?.Invoke(chunkData.Key, chunkData.Value);
+                chunkData.Value.Dispose();
             }
             dirtyChunks.Clear();
             chunks = null;
@@ -99,6 +100,13 @@ namespace Thijs.Framework.MarchingSquares
             dirtyChunks.Add(chunkIndex);
             
             OnChunkInstantiated?.Invoke(chunkIndex, chunkData);
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                LateUpdate();
+            }
+#endif
         }
 
         public void UnloadChunk(int2 chunkIndex)

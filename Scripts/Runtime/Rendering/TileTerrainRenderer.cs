@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -9,6 +11,7 @@ namespace Thijs.Framework.MarchingSquares
         private void OnEnable()
         {
             TileTerrain.OnChunkInstantiated += OnChunkInitialized;
+            TileTerrain.OnChunkDestroyed += OnChunkDestroyed;
         }
 
         private void OnChunkInitialized(int2 chunkIndex, ChunkData chunkData)
@@ -22,9 +25,22 @@ namespace Thijs.Framework.MarchingSquares
             chunkData.dependencies.Add(chunkRenderer);
         }
 
+        private void OnChunkDestroyed(int2 chunkIndex, ChunkData chunkData)
+        {
+            for (int i = chunkData.dependencies.Count - 1; i >= 0; i--)
+            {
+                if (chunkData.dependencies[i] is ChunkRenderer renderer)
+                {
+                    DestroyImmediate(renderer.gameObject);
+                    chunkData.dependencies.Remove(renderer);
+                }
+            }
+        }
+
         private void OnDisable()
         {
             TileTerrain.OnChunkInstantiated -= OnChunkInitialized;
+            TileTerrain.OnChunkDestroyed -= OnChunkDestroyed;
         }
     }
 }
