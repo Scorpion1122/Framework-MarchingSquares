@@ -7,7 +7,7 @@ namespace Thijs.Framework.MarchingSquares
     {
         private void OnEnable()
         {
-            TileTerrain.OnChunkInitialized += OnChunkInitialized;
+            TileTerrain.OnChunkInstantiated += OnChunkInitialized;
         }
 
         private void OnChunkInitialized(int2 chunkIndex, ChunkData chunkData)
@@ -23,7 +23,7 @@ namespace Thijs.Framework.MarchingSquares
 
         private void OnDisable()
         {
-            TileTerrain.OnChunkInitialized -= OnChunkInitialized;
+            TileTerrain.OnChunkInstantiated -= OnChunkInitialized;
         }
     }
 }

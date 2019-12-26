@@ -1,13 +1,16 @@
 ﻿using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
-    public class WorldGeneration : MonoBehaviour
+    [ExecuteInEditMode]
+    public class WorldGeneration : TileTerrainComponent, IChunkJobDependency
     {
         [SerializeField] private int seed = 1337;
 
         [Header("Height")]
+        [SerializeField] private float heightOffset = -5f;
         [SerializeField] private float heightNoiseFrequency = 5f;
         [SerializeField] private float heightScale = 10f;
 
@@ -16,17 +19,35 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private float maxRougnessModifier = 2f;
         [SerializeField] private float rougnessHeightScale = 5f;
 
-        public void GenerateChunkData(TileTerrain grid, ChunkData chunk)
+        public bool IsBlocking => true;
+
+        private void OnEnable()
+        {
+            TileTerrain.OnChunkInstantiated += OnChunkInitialized;
+        }
+
+        private void OnChunkInitialized(int2 index, ChunkData chunkData)
+        {
+            chunkData.dependencies.Add(this);
+        }
+
+        private void OnDisable()
+        {
+            TileTerrain.OnChunkInstantiated -= OnChunkInitialized;
+        }
+
+        public JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency)
         {
             System.Random random = new System.Random(seed);
 
             HeightGenerationJob heightGenJob = new HeightGenerationJob()
             {
                 tileSize = grid.TileSize,
-                resolution = chunk.Resolution,
-                origin = chunk.Origin,
+                resolution = chunkData.Resolution,
+                origin = chunkData.Origin,
 
                 fillType = FillType.TypeOne,
+                heightOffset = heightOffset,
                 noiseFrequency = heightNoiseFrequency,
                 noiseOffset = random.Next(-10000, 10000),
                 heightScale = heightScale,
@@ -35,14 +56,19 @@ namespace Thijs.Framework.MarchingSquares
                 maxRougnessModifier = maxRougnessModifier,
                 rougnessHeightScale = rougnessHeightScale,
 
-                fillTypes = chunk.fillTypes,
-                offsets = chunk.offsets,
-                normalsX = chunk.normalsX,
-                normalsY = chunk.normalsY,
+                fillTypes = chunkData.fillTypes,
+                offsets = chunkData.offsets,
+                normalsX = chunkData.normalsX,
+                normalsY = chunkData.normalsY,
             };
-            JobHandle handle = heightGenJob.Schedule(chunk.fillTypes.Length, 64);
+            dependency = heightGenJob.Schedule(chunkData.fillTypes.Length, 64, dependency);
 
-            handle.Complete();
+            return dependency;
+        }
+
+        public void OnJobCompleted(ChunkData chunkData)
+        {
+            chunkData.dependencies.Remove(this);
         }
     }
 }

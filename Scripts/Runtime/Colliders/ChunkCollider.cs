@@ -19,6 +19,8 @@ namespace Thijs.Framework.MarchingSquares
 
         private Dictionary<int, ColliderPool> colliderPools = new Dictionary<int, ColliderPool>();
 
+        public bool IsBlocking => false;
+
         private void OnEnable()
         {
             vertices = new NativeList<float2>(VoxelUtility.NATIVE_CACHE_SIZE, Allocator.Persistent);
@@ -80,7 +82,7 @@ namespace Thijs.Framework.MarchingSquares
             return currentJobHandle.Value;
         }
 
-        public void OnJobCompleted()
+        public void OnJobCompleted(ChunkData chunkData)
         {
             ResetColliderPools();
             int offset = 0;

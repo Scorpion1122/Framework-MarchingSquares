@@ -24,6 +24,8 @@ namespace Thijs.Framework.MarchingSquares
         private TileTerrain currentGrid;
         private JobHandle? currentJobHandle;
 
+        public bool IsBlocking => false;
+
         private void Awake()
         {
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
@@ -109,7 +111,7 @@ namespace Thijs.Framework.MarchingSquares
             return currentJobHandle.Value;
         }
 
-        public void OnJobCompleted()
+        public void OnJobCompleted(ChunkData chunkData)
         {
             currentJobHandle = null;
             ApplyDataToMesh();

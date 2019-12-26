@@ -12,6 +12,7 @@ namespace Thijs.Framework.MarchingSquares
         public float2 Origin { get; private set; }
         public float Size { get; private set; }
         public int Resolution { get; private set; }
+        public bool Initialized { get; set; }
 
         //Voxel Data
         public NativeArray<FillType> fillTypes;
@@ -23,7 +24,7 @@ namespace Thijs.Framework.MarchingSquares
         public NativeList<GridModification> modifiers;
 
         public JobHandle? jobHandle;
-        public List<IChunkJobDependency> dependencies;
+        public ChunkJobDependencyGraph dependencies;
 
         public ChunkData(float2 chunkOrigin, float chunkSize, int chunkResolution)
         {
@@ -40,7 +41,7 @@ namespace Thijs.Framework.MarchingSquares
             //Modifiers
             modifiers = new NativeList<GridModification>(100, Allocator.Persistent);
 
-            dependencies = new List<IChunkJobDependency>();
+            dependencies = new ChunkJobDependencyGraph();
         }
 
         public void Dispose()

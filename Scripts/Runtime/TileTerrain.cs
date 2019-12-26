@@ -14,7 +14,8 @@ namespace Thijs.Framework.MarchingSquares
     [ExecuteInEditMode, DefaultExecutionOrder(-10)]
     public class TileTerrain : MonoBehaviour
     {
-        public event Action<int2, ChunkData> OnChunkInitialized;
+        public event Action<int2, ChunkData> OnChunkInstantiated;
+        public event Action<int2, ChunkData> OnChunkDestroyed;
         
         [Header("Chunk Configuration")] 
         [SerializeField]
@@ -76,7 +77,7 @@ namespace Thijs.Framework.MarchingSquares
             StopCoroutine(routine);
             foreach (var chunkData in chunks)
             {
-                DisposeOfChunk(chunkData.Value);
+                OnChunkDestroyed?.Invoke(chunkData.Key, chunkData.Value);
             }
             dirtyChunks.Clear();
             chunks = null;
@@ -94,13 +95,10 @@ namespace Thijs.Framework.MarchingSquares
             float2 origin = ChunkUtility.GetChunkOrigin(chunkIndex, chunkSize);
             ChunkData chunkData = new ChunkData(origin, chunkSize, chunkResolution + 1);
 
-            if (worldGeneration != null)
-                worldGeneration.GenerateChunkData(this, chunkData);
-
             chunks.Add(chunkIndex, chunkData);
             dirtyChunks.Add(chunkIndex);
             
-            OnChunkInitialized?.Invoke(chunkIndex, chunkData);
+            OnChunkInstantiated?.Invoke(chunkIndex, chunkData);
         }
 
         public void UnloadChunk(int2 chunkIndex)
@@ -113,8 +111,9 @@ namespace Thijs.Framework.MarchingSquares
 
         private void DisposeOfChunk(ChunkData chunkData)
         {
-            foreach (var dependency in chunkData.dependencies)
+            for (int i = 0; i < chunkData.dependencies.Count; i++)
             {
+                IChunkJobDependency dependency = chunkData.dependencies[i];
                 if (dependency is Component component)
                 {
                     DestroyImmediate(component.gameObject);
@@ -206,18 +205,9 @@ namespace Thijs.Framework.MarchingSquares
             };
             jobHandle = modifyOffsetsJob.Schedule(voxelCount, 64, jobHandle);
 
-            // In principle all dependency jobs should be able to execute at the same time
-            JobHandle dependencyGroupHandle = new JobHandle();
-            for (int i = 0; i < chunkData.dependencies.Count; i++)
-            {
-                JobHandle dependencyHandle = chunkData.dependencies[i].ScheduleChunkJob(this, chunkData, jobHandle);
-                if (i == 0)
-                    dependencyGroupHandle = dependencyHandle;
-                else
-                    dependencyGroupHandle = JobHandle.CombineDependencies(dependencyHandle, dependencyGroupHandle);
-            }
+            jobHandle = chunkData.dependencies.ScheduleJobs(this, chunkData, jobHandle);
 
-            chunkData.jobHandle = dependencyGroupHandle;
+            chunkData.jobHandle = jobHandle;
         }
 
         private void CompleteChunkJobs(ChunkData chunkData)
@@ -228,11 +218,13 @@ namespace Thijs.Framework.MarchingSquares
             chunkData.jobHandle.Value.Complete();
             for (int i = 0; i < chunkData.dependencies.Count; i++)
             {
-                chunkData.dependencies[i].OnJobCompleted();
+                chunkData.dependencies[i].OnJobCompleted(chunkData);
             }
 
             chunkData.modifiers.Clear();
             chunkData.jobHandle = null;
+
+            chunkData.Initialized = true;
         }
         #endregion Job Scheduling
 

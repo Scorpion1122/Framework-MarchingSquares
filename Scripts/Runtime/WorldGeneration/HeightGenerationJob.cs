@@ -15,8 +15,10 @@ namespace Thijs.Framework.MarchingSquares
         [ReadOnly] public float2 origin;
 
         [ReadOnly] public FillType fillType;
-        [ReadOnly] public float noiseFrequency;
+
         [ReadOnly] public float noiseOffset;
+        [ReadOnly] public float heightOffset;
+        [ReadOnly] public float noiseFrequency;
         [ReadOnly] public float heightScale;
 
         [ReadOnly] public float roughnessFrequency;
@@ -77,7 +79,7 @@ namespace Thijs.Framework.MarchingSquares
             float secondaryOffset = (position.x + noiseOffset) * noiseFrequency * maxRougnessModifier;
             float secondary = (Mathf.PerlinNoise(-secondaryOffset, secondaryOffset) - 0.5f) * rougnessHeightScale * roughnessModifier;
 
-            return primary + secondary;
+            return primary + secondary + heightOffset;
         }
     }
 }

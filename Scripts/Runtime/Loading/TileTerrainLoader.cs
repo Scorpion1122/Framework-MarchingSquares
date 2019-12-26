@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace Thijs.Framework.MarchingSquares.Loading
 {
@@ -16,12 +17,12 @@ namespace Thijs.Framework.MarchingSquares.Loading
 
         private void OnEnable()
         {
-            TileTerrain.OnChunkInitialized += OnChunkInitialized;
+            TileTerrain.OnChunkInstantiated += OnChunkInitialized;
         }
 
         private void OnDisable()
         {
-            TileTerrain.OnChunkInitialized -= OnChunkInitialized;
+            TileTerrain.OnChunkInstantiated -= OnChunkInitialized;
         }
 
         private void OnChunkInitialized(int2 chunkIndex, ChunkData chunkData)
