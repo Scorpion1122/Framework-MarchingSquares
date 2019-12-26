@@ -130,6 +130,7 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     offset.y = newOffset;
                     normalY = math.normalize((position + new float2(0, offset.y)) - modifier.position);
+                    normalY *= GetNormalSign(modifier.setFilltype);
                 }
             }
             else if (canModifyY && !withinCircle && topWithinCircle)
@@ -140,6 +141,7 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     offset.y = newOffset;
                     normalY = math.normalize((position + new float2(0, offset.y)) - modifier.position);
+                    normalY *= GetNormalSign(modifier.setFilltype);
                 }
             }
 
@@ -156,6 +158,7 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     offset.x = newOffset;
                     normalX = math.normalize((position + new float2(offset.x, 0)) - modifier.position);
+                    normalX *= GetNormalSign(modifier.setFilltype);
                 }
             }
             else if (canModifyX && !withinCircle && rightWithinCircle)
@@ -166,6 +169,7 @@ namespace Thijs.Framework.MarchingSquares
                 {
                     offset.x = newOffset;
                     normalX = math.normalize((position + new float2(offset.x, 0)) - modifier.position);
+                    normalX *= GetNormalSign(modifier.setFilltype);
                 }
             }
 

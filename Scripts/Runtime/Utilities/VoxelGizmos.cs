@@ -9,9 +9,9 @@ namespace Thijs.Framework.MarchingSquares
     {
         public static void DrawVoxels(Transform transform, ChunkData chunkData, float size)
         {
-            for (int i = 0; i < chunkData.resolution * chunkData.resolution; i++)
+            for (int i = 0; i < chunkData.Resolution * chunkData.Resolution; i++)
             {
-                DrawVoxel(transform, chunkData, i, chunkData.resolution, size);
+                DrawVoxel(transform, chunkData, i, chunkData.Resolution, size);
             }
         }
 
@@ -24,7 +24,7 @@ namespace Thijs.Framework.MarchingSquares
 
             Gizmos.color = GetColor(fillType);
 
-            float2 position = VoxelUtility.IndexToPosition(index, resolution, size) + chunkData.origin;
+            float2 position = VoxelUtility.IndexToPosition(index, resolution, size) + chunkData.Origin;
 
             Vector3 worldPosition = transform.TransformPoint(new Vector3(position.x, position.y, 0));
             Vector3 offsetPositionX = worldPosition + offset.x * size * transform.right;

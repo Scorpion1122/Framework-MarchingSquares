@@ -8,7 +8,7 @@ namespace Thijs.Framework.MarchingSquares.Loading
     public class TileTerrainLoader : TileTerrainComponent
     {
         [SerializeField] private int padding = 1;
-        
+
         private List<Camera> cameras = new List<Camera>();
 
         private List<int2> loadedChunks = new List<int2>();

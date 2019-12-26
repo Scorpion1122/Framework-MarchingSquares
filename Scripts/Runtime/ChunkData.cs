@@ -9,9 +9,9 @@ namespace Thijs.Framework.MarchingSquares
 {
     public class ChunkData : IDisposable
     {
-        public float2 origin;
-        public float size;
-        public int resolution;
+        public float2 Origin { get; private set; }
+        public float Size { get; private set; }
+        public int Resolution { get; private set; }
 
         //Voxel Data
         public NativeArray<FillType> fillTypes;
@@ -27,15 +27,15 @@ namespace Thijs.Framework.MarchingSquares
 
         public ChunkData(float2 chunkOrigin, float chunkSize, int chunkResolution)
         {
-            resolution = chunkResolution;
-            origin = chunkOrigin;
-            size = chunkSize;
+            Resolution = chunkResolution;
+            Origin = chunkOrigin;
+            Size = chunkSize;
 
             //Voxel Data
-            fillTypes = new NativeArray<FillType>(resolution * resolution, Allocator.Persistent);
-            offsets = new NativeArray<float2>(resolution * resolution, Allocator.Persistent);
-            normalsX = new NativeArray<float2>(resolution * resolution, Allocator.Persistent);
-            normalsY = new NativeArray<float2>(resolution * resolution, Allocator.Persistent);
+            fillTypes = new NativeArray<FillType>(Resolution * Resolution, Allocator.Persistent);
+            offsets = new NativeArray<float2>(Resolution * Resolution, Allocator.Persistent);
+            normalsX = new NativeArray<float2>(Resolution * Resolution, Allocator.Persistent);
+            normalsY = new NativeArray<float2>(Resolution * Resolution, Allocator.Persistent);
 
             //Modifiers
             modifiers = new NativeList<GridModification>(100, Allocator.Persistent);
@@ -54,7 +54,7 @@ namespace Thijs.Framework.MarchingSquares
 
         public Rect GetBounds()
         {
-            return new Rect(origin, new float2(size, size));
+            return new Rect(Origin, new float2(Size, Size));
         }
     }
 }

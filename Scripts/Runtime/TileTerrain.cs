@@ -19,13 +19,14 @@ namespace Thijs.Framework.MarchingSquares
         [Header("Chunk Configuration")] 
         [SerializeField]
         private int chunkResolution = 64;
-
         [SerializeField]
         private float tileSize = 1f;
         [SerializeField]
         private float sharpnessLimit = 135;
 
         [FormerlySerializedAs("materialTemplate")] [SerializeField] private TileTemplate tileTemplate = null;
+
+        [SerializeField] private WorldGeneration worldGeneration;
 
         [Header("Debug")] 
         [SerializeField] private bool drawGizmos = false;
@@ -52,11 +53,6 @@ namespace Thijs.Framework.MarchingSquares
         {
             Initialize();
             routine = StartCoroutine(EndOfFrameEnumerator());
-            
-            LoadChunk(new int2(-1, -1));
-            LoadChunk(new int2(0, -1));
-            LoadChunk(new int2(-1, 0));
-            LoadChunk(new int2(0, 0));
         }
 
         private void Initialize()
@@ -82,6 +78,7 @@ namespace Thijs.Framework.MarchingSquares
             {
                 DisposeOfChunk(chunkData.Value);
             }
+            dirtyChunks.Clear();
             chunks = null;
             supportedFillTypes.Dispose();
         }
@@ -96,8 +93,12 @@ namespace Thijs.Framework.MarchingSquares
         {
             float2 origin = ChunkUtility.GetChunkOrigin(chunkIndex, chunkSize);
             ChunkData chunkData = new ChunkData(origin, chunkSize, chunkResolution + 1);
-            
+
+            if (worldGeneration != null)
+                worldGeneration.GenerateChunkData(this, chunkData);
+
             chunks.Add(chunkIndex, chunkData);
+            dirtyChunks.Add(chunkIndex);
             
             OnChunkInitialized?.Invoke(chunkIndex, chunkData);
         }
@@ -186,7 +187,7 @@ namespace Thijs.Framework.MarchingSquares
             int voxelCount = chunkData.fillTypes.Length;
             ModifyFillTypeJob modifyFillJob = new ModifyFillTypeJob()
             {
-                resolution = chunkData.resolution,
+                resolution = chunkData.Resolution,
                 size = tileSize,
                 modifiers = chunkData.modifiers,
                 fillTypes = chunkData.fillTypes,
@@ -195,7 +196,7 @@ namespace Thijs.Framework.MarchingSquares
 
             ModifyOffsetsJob modifyOffsetsJob = new ModifyOffsetsJob()
             {
-                resolution = chunkData.resolution,
+                resolution = chunkData.Resolution,
                 size = tileSize,
                 modifiers = chunkData.modifiers,
                 fillTypes = chunkData.fillTypes,
@@ -262,7 +263,7 @@ namespace Thijs.Framework.MarchingSquares
 
         private void AddScheduledModificationToChunks(int2 index, ChunkData chunk, GridModification modification)
         {
-            modification.position = modification.position - chunk.origin;
+            modification.position = modification.position - chunk.Origin;
             chunk.modifiers.Add(modification);
 
             if (!dirtyChunks.Contains(index))
@@ -290,7 +291,7 @@ namespace Thijs.Framework.MarchingSquares
 
             foreach (var chunkData in chunks)
             {
-                float2 center = chunkData.Value.origin + chunkSize * 0.5f;
+                float2 center = chunkData.Value.Origin + chunkSize * 0.5f;
                 Vector3 worldCenter = transform.TransformPoint(new Vector3(center.x, center.y, 0));
                 Gizmos.DrawWireCube(worldCenter, new Vector3(tileSize, tileSize, 0) * chunkResolution);
             }
