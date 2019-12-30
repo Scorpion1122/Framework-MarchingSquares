@@ -71,7 +71,7 @@ namespace Thijs.Framework.MarchingSquares
         private float GetHeightValue(float2 position)
         {
             float primaryOffset = (position.x + noiseOffset) * noiseFrequency;
-            float primary = Mathf.PerlinNoise(primaryOffset, -primaryOffset) * heightScale;
+            float primary = (Mathf.PerlinNoise(primaryOffset, -primaryOffset) - 0.5f) * heightScale;
 
             float roughnessOffset = (position.x + noiseOffset) * roughnessFrequency;
             float roughnessModifier = Mathf.PerlinNoise(roughnessOffset, roughnessOffset);

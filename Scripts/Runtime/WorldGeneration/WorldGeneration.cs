@@ -64,7 +64,6 @@ namespace Thijs.Framework.MarchingSquares
             };
             dependency = heightGenJob.Schedule(chunkData.fillTypes.Length, 64, dependency);
 
-
             return dependency;
         }
 

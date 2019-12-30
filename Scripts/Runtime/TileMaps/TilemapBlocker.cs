@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -12,7 +11,7 @@ namespace Thijs.Framework.MarchingSquares
     [DependsOn(typeof(WorldGeneration))]
     public class TilemapBlocker : TileTerrainComponent, IChunkJobScheduler
     {
-        [SerializeField] private Tilemap[] tilemaps;
+        [SerializeField] private Tilemap[] tilemaps = null;
 
         private Dictionary<ChunkData, NativeList<GridModification>> modifierCache;
 
@@ -115,13 +114,14 @@ namespace Thijs.Framework.MarchingSquares
 
         private GridModification CreateModifier(ChunkData chunkData, Vector3Int position)
         {
+            float size = 0.5f;
             return new GridModification()
             {
                 ModifierShape = ModifierShape.Square,
                 modifierType = ModifierType.Always,
                 setFilltype = FillType.None,
-                position = new float2(position.x, position.y) - chunkData.Origin,
-                size = 1f,
+                position = new float2(position.x + size, position.y + size) - chunkData.Origin,
+                size = size,
             };
         }
 
@@ -134,7 +134,7 @@ namespace Thijs.Framework.MarchingSquares
         private BoundsInt GetBoundsInt(Rect rect)
         {
             return new BoundsInt(
-                new Vector3Int((int)rect.min.x, (int)rect.min.y, 0), 
+                new Vector3Int((int)rect.min.x, (int)rect.min.y, 0),
                 new Vector3Int((int)rect.size.x, (int)rect.size.y, 1));
         }
 
@@ -142,5 +142,19 @@ namespace Thijs.Framework.MarchingSquares
         {
             return new Rect(boundsInt.min.x, boundsInt.min.y, boundsInt.size.x, boundsInt.size.y);
         }
+
+        //private void OnDrawGizmos()
+        //{
+        //    Gizmos.color = Color.red;
+        //    foreach (var data in modifierCache)
+        //    {
+        //        foreach (var modifier in data.Value)
+        //        {
+        //            Vector3 position = new Vector3(data.Key.Origin.x + modifier.position.x, data.Key.Origin.y + modifier.position.y);
+        //            Gizmos.DrawWireCube(position, Vector3.one * modifier.size * 2f);
+        //        }
+        //    }
+        //    Gizmos.color = Color.white;
+        //}
     }
 }

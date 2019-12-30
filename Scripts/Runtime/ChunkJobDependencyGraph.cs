@@ -28,6 +28,7 @@ namespace Thijs.Framework.MarchingSquares
             for (int i = 0; i < jobs.Count; i++)
             {
                 IChunkJobScheduler dependency = jobs[i];
+
                 JobHandle dependencyHandle = dependency.ScheduleChunkJob(grid, chunkData, jobHandle);
                 if (i == 0 || dependency.IsBlocking)
                     jobHandle = dependencyHandle;
@@ -106,7 +107,7 @@ namespace Thijs.Framework.MarchingSquares
         private int InsertBeforeIndex(Type type)
         {
             if (!dependee.TryGetValue(type, out List<Type> dependents))
-                return jobs.Count;
+                return -1;
 
             int result = -1;
             for (int i = 0; i < dependents.Count; i++)
@@ -121,7 +122,7 @@ namespace Thijs.Framework.MarchingSquares
         private int InsertAfterIndex(Type type)
         {
             if (!dependent.TryGetValue(type, out List<Type> dependees))
-                return jobs.Count;
+                return -1;
 
             int result = -1;
             for (int i = 0; i < dependees.Count; i++)
