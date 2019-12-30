@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
+
     [ExecuteInEditMode]
     public class WorldGeneration : TileTerrainComponent, IChunkJobDependency
     {
@@ -62,6 +63,7 @@ namespace Thijs.Framework.MarchingSquares
                 normalsY = chunkData.normalsY,
             };
             dependency = heightGenJob.Schedule(chunkData.fillTypes.Length, 64, dependency);
+
 
             return dependency;
         }

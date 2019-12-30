@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 namespace Thijs.Framework.MarchingSquares.Loading
 {
@@ -40,11 +39,13 @@ namespace Thijs.Framework.MarchingSquares.Loading
                 CameraUtility.AddChunkRangeInCameraView(cameras[i], padding, TileTerrain.ChunkSize, ref chunks);
             //chunks.Add(int2.zero);
 
+            bool didLoadAny = false;
             for (int i = 0; i < chunks.Count; i++)
             {
                 if (!TileTerrain.IsChunkActive(chunks[i]))
                 {
                     TileTerrain.LoadChunk(chunks[i]);
+                    didLoadAny = true;
                 }
             }
 
@@ -57,6 +58,13 @@ namespace Thijs.Framework.MarchingSquares.Loading
                     i--;
                 }
             }
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying && didLoadAny)
+            {
+                UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+            }
+#endif
         }
     }
 }

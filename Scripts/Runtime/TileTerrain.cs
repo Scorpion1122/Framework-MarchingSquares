@@ -27,8 +27,6 @@ namespace Thijs.Framework.MarchingSquares
 
         [FormerlySerializedAs("materialTemplate")] [SerializeField] private TileTemplate tileTemplate = null;
 
-        [SerializeField] private WorldGeneration worldGeneration;
-
         [Header("Debug")] 
         [SerializeField] private bool drawGizmos = false;
 
@@ -100,13 +98,6 @@ namespace Thijs.Framework.MarchingSquares
             dirtyChunks.Add(chunkIndex);
             
             OnChunkInstantiated?.Invoke(chunkIndex, chunkData);
-
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                LateUpdate();
-            }
-#endif
         }
 
         public void UnloadChunk(int2 chunkIndex)
@@ -144,7 +135,7 @@ namespace Thijs.Framework.MarchingSquares
             CompleteChunkJobs();
             AddScheduledModificationsToChunks();
             ScheduleChunkJobs();
-            
+
             if (!Application.isPlaying)
                 CompleteChunkJobs();
             Profiler.EndSample();
@@ -224,10 +215,7 @@ namespace Thijs.Framework.MarchingSquares
                 return;
 
             chunkData.jobHandle.Value.Complete();
-            for (int i = 0; i < chunkData.dependencies.Count; i++)
-            {
-                chunkData.dependencies[i].OnJobCompleted(chunkData);
-            }
+            chunkData.dependencies.OnJobsCompleted(chunkData);
 
             chunkData.modifiers.Clear();
             chunkData.jobHandle = null;
