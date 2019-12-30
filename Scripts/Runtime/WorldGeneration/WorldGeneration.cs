@@ -6,7 +6,7 @@ namespace Thijs.Framework.MarchingSquares
 {
 
     [ExecuteInEditMode]
-    public class WorldGeneration : TileTerrainComponent, IChunkJobDependency
+    public class WorldGeneration : TileTerrainComponent, IChunkJobScheduler
     {
         [SerializeField] private int seed = 1337;
 

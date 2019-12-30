@@ -2,7 +2,7 @@ using Unity.Jobs;
 
 namespace Thijs.Framework.MarchingSquares
 {
-    public interface IChunkJobDependency
+    public interface IChunkJobScheduler
     {
         bool IsBlocking { get; }
 

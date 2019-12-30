@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Thijs.Framework.MarchingSquares
 {
     [ExecuteInEditMode]
-    public class ChunkCollider : MonoBehaviour, IChunkJobDependency
+    public class ChunkCollider : MonoBehaviour, IChunkJobScheduler
     {
         private NativeList<float2> vertices;
         private NativeList<int> lengths;

@@ -112,7 +112,7 @@ namespace Thijs.Framework.MarchingSquares
         {
             for (int i = 0; i < chunkData.dependencies.Count; i++)
             {
-                IChunkJobDependency dependency = chunkData.dependencies[i];
+                IChunkJobScheduler dependency = chunkData.dependencies[i];
                 if (dependency is Component component)
                 {
                     DestroyImmediate(component.gameObject);

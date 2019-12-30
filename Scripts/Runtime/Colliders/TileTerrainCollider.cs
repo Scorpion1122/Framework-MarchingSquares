@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
+    [ExecuteInEditMode]
     public class TileTerrainCollider : TileTerrainComponent
     {
         private void OnEnable()

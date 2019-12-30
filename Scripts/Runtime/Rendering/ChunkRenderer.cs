@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Thijs.Framework.MarchingSquares
 {
     [ExecuteInEditMode]
-    public class ChunkRenderer : MonoBehaviour, IChunkJobDependency
+    public class ChunkRenderer : MonoBehaviour, IChunkJobScheduler
     {
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private MeshFilter meshFilter;
