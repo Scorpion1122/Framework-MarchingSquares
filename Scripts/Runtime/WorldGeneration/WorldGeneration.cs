@@ -1,12 +1,11 @@
-﻿using Unity.Jobs;
-using Unity.Mathematics;
+﻿using Unity.Mathematics;
 using UnityEngine;
 
 namespace Thijs.Framework.MarchingSquares
 {
 
     [ExecuteInEditMode]
-    public class WorldGeneration : TileTerrainComponent, IChunkJobScheduler
+    public class WorldGeneration : TileTerrainComponent
     {
         [SerializeField] private int seed = 1337;
 
@@ -15,10 +14,14 @@ namespace Thijs.Framework.MarchingSquares
         [SerializeField] private float heightNoiseFrequency = 5f;
         [SerializeField] private float heightScale = 10f;
 
-        [Header("Rougness")]
+        [Header("Height - Rougness")]
         [SerializeField] private float roughnessFrequency = 1f;
         [SerializeField] private float maxRougnessModifier = 2f;
         [SerializeField] private float rougnessHeightScale = 5f;
+
+        [Header("Caves")]
+        [SerializeField] private float caveNoiseCutOff = 0.5f;
+        [SerializeField] private NoiseSettings[] caveNoiseSettings = new NoiseSettings[1];
 
         public bool IsBlocking => true;
 
@@ -29,47 +32,27 @@ namespace Thijs.Framework.MarchingSquares
 
         private void OnChunkInitialized(int2 index, ChunkData chunkData)
         {
-            chunkData.dependencies.Add(this);
-        }
-
-        private void OnDisable()
-        {
-            TileTerrain.OnChunkInstantiated -= OnChunkInitialized;
-        }
-
-        public JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency)
-        {
-            System.Random random = new System.Random(seed);
-
-            HeightGenerationJob heightGenJob = new HeightGenerationJob()
+            WorldGenerationScheduler instance = new WorldGenerationScheduler()
             {
-                tileSize = grid.TileSize,
-                resolution = chunkData.Resolution,
-                origin = chunkData.Origin,
+                seed = seed,
 
-                fillType = FillType.TypeOne,
                 heightOffset = heightOffset,
-                noiseFrequency = heightNoiseFrequency,
-                noiseOffset = random.Next(-10000, 10000),
+                heightNoiseFrequency = heightNoiseFrequency,
                 heightScale = heightScale,
 
                 roughnessFrequency = roughnessFrequency,
                 maxRougnessModifier = maxRougnessModifier,
                 rougnessHeightScale = rougnessHeightScale,
 
-                fillTypes = chunkData.fillTypes,
-                offsets = chunkData.offsets,
-                normalsX = chunkData.normalsX,
-                normalsY = chunkData.normalsY,
+                caveNoiseCutOff = caveNoiseCutOff,
             };
-            dependency = heightGenJob.Schedule(chunkData.fillTypes.Length, 64, dependency);
-
-            return dependency;
+            instance.SetCaveNoiseSettings(caveNoiseSettings);
+            chunkData.dependencies.Add(instance);
         }
 
-        public void OnJobCompleted(ChunkData chunkData)
+        private void OnDisable()
         {
-            chunkData.dependencies.Remove(this);
+            TileTerrain.OnChunkInstantiated -= OnChunkInitialized;
         }
     }
 }
