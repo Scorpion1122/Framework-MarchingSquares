@@ -50,7 +50,11 @@ namespace Thijs.Framework.MarchingSquares
         {
             if (noiseValue == 0f && noiseValueTwo == 0f)
                 return 0f;
-            return noiseValue / (noiseValue + noiseValueTwo);
+
+            float diffToTwo = math.abs(noiseValue - noiseValueTwo);
+            float diffToCutOff = math.abs(noiseValue - noiseCutOff);
+            return diffToCutOff/diffToTwo;
+            //return noiseValue / (noiseValue + noiseValueTwo);
         }
 
         private FillType GetFillType(int index)
