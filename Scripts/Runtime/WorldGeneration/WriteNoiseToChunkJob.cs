@@ -27,6 +27,7 @@ namespace Thijs.Framework.MarchingSquares
                 return;
 
             float currentNoise = GetNoise(index);
+            float topRightNoise = GetNoise(index + resolution + 1);
             float topNoise = GetNoise(index + resolution);
             float rightNoise = GetNoise(index + 1);
 
@@ -34,15 +35,23 @@ namespace Thijs.Framework.MarchingSquares
             bool fillTop = topNoise >= noiseCutOff;
             bool fillRight = rightNoise >= noiseCutOff;
 
+            float2 normal = GetNormal(currentNoise, topNoise, topRightNoise, rightNoise);
+
             if (fillCurrent)
                 fillTypes[index] = fillType;
 
             float2 offset = offsets[index];
             if (fillCurrent != fillTop)
+            {
                 offset.y = GetIntersection(currentNoise, topNoise) * tileSize;
+                normalsY[index] = normal;
+            }
 
             if (fillCurrent != fillRight)
+            {
                 offset.x = GetIntersection(currentNoise, rightNoise) * tileSize;
+                normalsX[index] = normal;
+            }
             offsets[index] = offset;
         }
 
@@ -54,7 +63,17 @@ namespace Thijs.Framework.MarchingSquares
             float diffToTwo = math.abs(noiseValue - noiseValueTwo);
             float diffToCutOff = math.abs(noiseValue - noiseCutOff);
             return diffToCutOff/diffToTwo;
-            //return noiseValue / (noiseValue + noiseValueTwo);
+        }
+
+        private float2 GetNormal(float current, float top, float topRight, float right)
+        {
+            float total = current + top + topRight + right;
+            float2 result = new float2(-0.5f, -0.5f) * current;
+            result += new float2(-0.5f, 0.5f) * top;
+            result += new float2(0.5f, 0.5f) * topRight;
+            result += new float2(0.5f, -0.5f) * right;
+            result /= total;
+            return math.normalize(result);
         }
 
         private FillType GetFillType(int index)
