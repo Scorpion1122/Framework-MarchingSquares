@@ -8,12 +8,8 @@ namespace Thijs.Framework.MarchingSquares
         public int seed = 1337;
 
         public float heightOffset = -5f;
-        public float heightNoiseFrequency = 5f;
         public float heightScale = 10f;
-
-        public float roughnessFrequency = 1f;
-        public float maxRougnessModifier = 2f;
-        public float rougnessHeightScale = 5f;
+        public NoiseSettings heightNoiseSettings;
 
         private NoiseSettings[] caveNoiseSettings;
         public float caveNoiseCutOff = 0.5f;
@@ -33,8 +29,11 @@ namespace Thijs.Framework.MarchingSquares
             // Only need to run world gen once, so remove its dependency
             chunkData.dependencies.Remove(this);
 
-            caveNoise.Dispose();
-            caveNoiseInput.Dispose();
+            if (caveNoise.IsCreated)
+            {
+                caveNoise.Dispose();
+                caveNoiseInput.Dispose();
+            }
         }
 
         public JobHandle ScheduleChunkJob(TileTerrain grid, ChunkData chunkData, JobHandle dependency)
@@ -49,13 +48,8 @@ namespace Thijs.Framework.MarchingSquares
 
                 fillType = FillType.TypeOne,
                 heightOffset = heightOffset,
-                noiseFrequency = heightNoiseFrequency,
-                noiseOffset = random.Next(-10000, 10000),
                 heightScale = heightScale,
-
-                roughnessFrequency = roughnessFrequency,
-                maxRougnessModifier = maxRougnessModifier,
-                rougnessHeightScale = rougnessHeightScale,
+                noiseSettings = heightNoiseSettings,
 
                 fillTypes = chunkData.fillTypes,
                 offsets = chunkData.offsets,

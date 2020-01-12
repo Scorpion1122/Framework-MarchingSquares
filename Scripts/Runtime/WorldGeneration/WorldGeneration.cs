@@ -11,13 +11,8 @@ namespace Thijs.Framework.MarchingSquares
 
         [Header("Height")]
         [SerializeField] private float heightOffset = -5f;
-        [SerializeField] private float heightNoiseFrequency = 5f;
         [SerializeField] private float heightScale = 10f;
-
-        [Header("Height - Rougness")]
-        [SerializeField] private float roughnessFrequency = 1f;
-        [SerializeField] private float maxRougnessModifier = 2f;
-        [SerializeField] private float rougnessHeightScale = 5f;
+        [SerializeField] private NoiseSettings heightNoiseSettings;
 
         [Header("Caves")]
         [SerializeField] private float caveNoiseCutOff = 0.5f;
@@ -37,12 +32,8 @@ namespace Thijs.Framework.MarchingSquares
                 seed = seed,
 
                 heightOffset = heightOffset,
-                heightNoiseFrequency = heightNoiseFrequency,
                 heightScale = heightScale,
-
-                roughnessFrequency = roughnessFrequency,
-                maxRougnessModifier = maxRougnessModifier,
-                rougnessHeightScale = rougnessHeightScale,
+                heightNoiseSettings = heightNoiseSettings,
 
                 caveNoiseCutOff = caveNoiseCutOff,
             };

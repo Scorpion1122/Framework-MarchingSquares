@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-using Unity.Jobs;
+﻿using Unity.Jobs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -16,14 +14,9 @@ namespace Thijs.Framework.MarchingSquares
 
         [ReadOnly] public FillType fillType;
 
-        [ReadOnly] public float noiseOffset;
         [ReadOnly] public float heightOffset;
-        [ReadOnly] public float noiseFrequency;
         [ReadOnly] public float heightScale;
-
-        [ReadOnly] public float roughnessFrequency;
-        [ReadOnly] public float rougnessHeightScale;
-        [ReadOnly] public float maxRougnessModifier;
+        [ReadOnly] public NoiseSettings noiseSettings;
 
         public NativeArray<FillType> fillTypes;
         public NativeArray<float2> offsets;
@@ -70,16 +63,8 @@ namespace Thijs.Framework.MarchingSquares
 
         private float GetHeightValue(float2 position)
         {
-            float primaryOffset = (position.x + noiseOffset) * noiseFrequency;
-            float primary = (Mathf.PerlinNoise(primaryOffset, -primaryOffset) - 0.5f) * heightScale;
-
-            float roughnessOffset = (position.x + noiseOffset) * roughnessFrequency;
-            float roughnessModifier = Mathf.PerlinNoise(roughnessOffset, roughnessOffset);
-
-            float secondaryOffset = (position.x + noiseOffset) * noiseFrequency * maxRougnessModifier;
-            float secondary = (Mathf.PerlinNoise(-secondaryOffset, secondaryOffset) - 0.5f) * rougnessHeightScale * roughnessModifier;
-
-            return primary + secondary + heightOffset;
+            float noise = NoiseUtility.GetNoiseValue(new float2(position.x, 0f), noiseSettings);
+            return noise * heightScale + heightOffset;
         }
     }
 }
