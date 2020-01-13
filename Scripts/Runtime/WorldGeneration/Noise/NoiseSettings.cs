@@ -10,6 +10,8 @@ namespace Thijs.Framework.MarchingSquares
         public float frequencyTwo;
         public float frequencyThree;
         public int offset;
+
         public bool invert;
+        public bool ridges;
     }
 }

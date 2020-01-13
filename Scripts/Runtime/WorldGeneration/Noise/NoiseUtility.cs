@@ -8,16 +8,39 @@ namespace Thijs.Framework.MarchingSquares
         {
             position += settings.offset;
 
-            float value = GetNoiseValue(position * settings.frequency, settings.type);
+            float value = 0f;
+
+            float noise = GetNoiseValue(position * settings.frequency, settings.type);
+            if (settings.ridges)
+                noise = GetRigdeNoiseValue(noise);
+            value += noise;
+
             if (settings.frequencyTwo != 0f)
-                value += GetNoiseValue(position * settings.frequencyTwo, settings.type) * 0.5f;
-            if (settings.frequencyThree!= 0f)
-                value += GetNoiseValue(position * settings.frequencyThree, settings.type) * 0.25f;
+            {
+                noise = GetNoiseValue(position * settings.frequencyTwo, settings.type) * 0.5f;
+                if (settings.ridges)
+                    noise = GetRigdeNoiseValue(noise);
+                value += noise;
+            }
+
+            if (settings.frequencyThree != 0f)
+            {
+                noise = GetNoiseValue(position * settings.frequencyThree, settings.type) * 0.25f;
+                if (settings.ridges)
+                    noise = GetRigdeNoiseValue(noise);
+                value += noise;
+            }
+
 
             if (settings.invert)
                 value = 1f - value;
 
             return value;
+        }
+
+        public static float GetRigdeNoiseValue(float value)
+        {
+            return 2f * (0.5f - math.abs(0.5f - value));
         }
 
         public static float GetNoiseValue(float2 position, NoiseType type)
@@ -41,6 +64,7 @@ namespace Thijs.Framework.MarchingSquares
                     value = noise.cellular(position).y;
                     break;
             }
+            //return math.round(value * 8) / 8; //Terrasing
             return value;
         }
     }
